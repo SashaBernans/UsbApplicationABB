@@ -228,6 +228,9 @@ public class MainView extends JFrame implements IView, ActionListener{
 	}
 
 	private void createImage() {
+		
+		controller.formatDrive(this.usbDropDownList.getSelectedItem().toString(),this.workOrderInput.getText());
+		
 		//Prevents FTSWAERI to be selected without laptop type
 		if(!this.laptopBox.getState()&& this.FTSWAERI_Box.getState()) {
 			JOptionPane.showMessageDialog(this,

@@ -1,0 +1,1 @@
+#this will copy a file to USB root

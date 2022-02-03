@@ -12,6 +12,6 @@ public interface IMainController {
 
 	void createImage(Image image, String usbPath);
 	
-	void formatDrive(String drive);
+	void formatDrive(String drive, String workOrder);
 
 }

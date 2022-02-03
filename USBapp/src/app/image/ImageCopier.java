@@ -1,6 +1,8 @@
 package app.image;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -23,22 +25,46 @@ public class ImageCopier {
 		
 		System.out.println(TIBPath);
 		
+		//copyFileToUsbRoot(destination, TIBPath);
+		
 		directoriesToCopy.forEach(dir ->{
 			try {
-				this.copyDirectory(dir, destination);
+				this.copyDirectoryAndContentsToDestination(dir, destination);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		});
 		
-		renameDrive(image.getWorkOrder(), destination);
+		//renameDrive(image.getWorkOrder(), destination);
+	}
+
+	private void copyFileToUsbRoot(String destination, String TIBPath) {
+		try {
+			Process process = Runtime.getRuntime().exec(new String[]{"cmd.exe", "/c","xcopy /y"+TIBPath+" "+destination});
+			BufferedReader reader = new BufferedReader(new InputStreamReader (process.getInputStream()));
+			while(process.isAlive()){
+				System.out.println(reader.readLine());
+			}	
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	private String findTIBFileStartingWith(String startingPartOfFile, String imageFolder) {
 		ArrayList<String> files = new ArrayList<String>();
 		ArrayList<String> folderPath = findDirectoryStartingWith(startingPartOfFile,ImageConstants.IMAGE_FOLDER);
-		walkReadable(Paths.get(folderPath.get(0)))
+		String pathOfDirectory; 
+		if(folderPath.isEmpty()) {
+			pathOfDirectory = ImageConstants.IMAGE_FOLDER;
+		}
+		else
+		{
+			pathOfDirectory = folderPath.get(0);
+		}
+		
+		walkReadable(Paths.get(pathOfDirectory))
 			.forEach(file ->{
 				if(file.getFileName().toString().startsWith(startingPartOfFile)) {
 					files.add(file.toString());
@@ -56,20 +82,6 @@ public class ImageCopier {
 			e.printStackTrace();
 		}
 	}
-
-	private void copyDirectory(String sourceDirectoryLocation, String destinationDirectoryLocation) 
-			  throws IOException {
-			    Files.walk(Paths.get(sourceDirectoryLocation))
-			      .forEach(source -> {
-			          Path destination = Paths.get(destinationDirectoryLocation, source.toString()
-			            .substring(sourceDirectoryLocation.length()));
-			          try {
-			              Files.copy(source, destination);
-			          } catch (IOException e) {
-			              e.printStackTrace();
-			          }
-			      });
-			}
 	
 	private ArrayList<String> findDirectoryStartingWith(String startingPartOfDirectory, String sourceDirectoryLocation) {
 		ArrayList<String> files = new ArrayList<String>();
@@ -97,5 +109,24 @@ public class ImageCopier {
 			return Stream.of(p);
 		}
 		return Stream.of(p);
+    }
+
+	private void copyDirectoryAndContentsToDestination(String sourceDirectory,String destinationDirectory) throws IOException {
+        Path fromPath = Paths.get(sourceDirectory);
+        Path toPath = Paths.get(destinationDirectory);
+
+        Files.walk(fromPath)
+             .forEach(source -> copySourceToDest(fromPath, source,toPath));
+    }
+
+    private static void copySourceToDest(Path fromPath, Path source,Path toPath) {
+        Path destination = Paths.get(toPath.toString()+"\\"+fromPath.getFileName().toString()
+        		, source.toString().substring(fromPath.toString().length()));
+        try {
+            Files.copy(source, destination);
+            
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

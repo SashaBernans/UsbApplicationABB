@@ -4,7 +4,7 @@ public final class ImageConstants {
 	public static final String DESKTOP_WITH_FTSW100 = "AA003051-06";
 	public static final String DESKTOP_WITHOUT_FTSW100 = "AA003051-05";
 	public static final String LAPTOP_WITH_FTSW100 = "AA003045-06";
-	public static final String LAPTOP_WITHOUT_FTSW100 = "AA003045-05";
+	public static final String LAPTOP_WITHOUT_FTSW100 = "AA003045-06";
 	public static final String LAPTOP_FOR_AERI = "AA010554-01";
 	public static final String INDUSTRIAL_COMPUTER = "AA008923-01";
 	public static final String RACK_PC = "AA006864-06";

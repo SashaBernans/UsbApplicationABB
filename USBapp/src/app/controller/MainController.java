@@ -34,8 +34,8 @@ public class MainController implements IMainController {
 	}
 
 	@Override
-	public void formatDrive(String drive) {
-		this.usbFormatter.formatToNTFS(drive);
+	public void formatDrive(String drive, String workOrder) {
+		this.usbFormatter.formatToNTFS(drive, workOrder);
 	}
 
 }
