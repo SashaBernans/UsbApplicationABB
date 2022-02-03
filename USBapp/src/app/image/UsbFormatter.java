@@ -15,7 +15,7 @@ public class UsbFormatter {
 			//execute format process in command promtp
 			Process process = Runtime.getRuntime().exec(new String[]{"cmd.exe", "/c","format /y "+letter+" /v:"+workOrder+" /FS:NTFS /Q"}); 
 		
-			// Getting the results
+			// printing the results
 			  process.getOutputStream().close();
 			  String line;
 			  System.out.println("Standard Output:");
@@ -25,7 +25,7 @@ public class UsbFormatter {
 			   System.out.println(line);
 			  }
 			  
-			  //Check for errors
+			//Print out errors
 			  stdout.close();
 			  System.out.println("Standard Error:");
 			  BufferedReader stderr = new BufferedReader(new InputStreamReader(

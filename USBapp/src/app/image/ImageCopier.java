@@ -25,7 +25,7 @@ public class ImageCopier {
 		
 		System.out.println(TIBPath);
 		
-		//copyFileToUsbRoot(destination, TIBPath);
+		copyFileToUsbRoot(destination, TIBPath);
 		
 		directoriesToCopy.forEach(dir ->{
 			try {
@@ -41,11 +41,29 @@ public class ImageCopier {
 
 	private void copyFileToUsbRoot(String destination, String TIBPath) {
 		try {
-			Process process = Runtime.getRuntime().exec(new String[]{"cmd.exe", "/c","xcopy /y"+TIBPath+" "+destination});
-			BufferedReader reader = new BufferedReader(new InputStreamReader (process.getInputStream()));
-			while(process.isAlive()){
-				System.out.println(reader.readLine());
-			}	
+		  // Executing the command
+		  Process powerShellProcess = Runtime.getRuntime().exec(new String[]{"powershell.exe", "/c","Copy-Item \""+TIBPath+"\" -Destination \""+destination+"\""});
+		  
+		  // printing the results
+		  powerShellProcess.getOutputStream().close();
+		  String line;
+		  System.out.println("Standard Output:");
+		  BufferedReader stdout = new BufferedReader(new InputStreamReader(
+		    powerShellProcess.getInputStream()));
+		  while ((line = stdout.readLine()) != null) {
+		   System.out.println(line);
+		  }
+		  stdout.close();
+		  
+		  //Print out errors
+		  System.out.println("Standard Error:");
+		  BufferedReader stderr = new BufferedReader(new InputStreamReader(
+		    powerShellProcess.getErrorStream()));
+		  while ((line = stderr.readLine()) != null) {
+		   System.out.println(line);
+		  }
+		  stderr.close();
+		  System.out.println("Done");
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
