@@ -10,26 +10,30 @@ import java.util.ArrayList;
 import java.util.stream.Stream;
 
 public class ImageCopier {
-	public ImageCopier() {
-		
+	private Image image;
+	private String destination;
+	
+	public ImageCopier(Image image, String destination) {
+		this.setImage(image);
+		this.setDestination(destination);
 	}
 
-	public void copyImageToUsb(Image image, String destination)  {
+	public void copyImageToUsb()  {
 		ArrayList<String> directoriesToCopy = new ArrayList<String>();
-		image.getSoftwareFolderNames().forEach(folder ->{
+		getImage().getSoftwareFolderNames().forEach(folder ->{
 			directoriesToCopy.addAll(this.findDirectoryStartingWith(folder, ImageConstants.IMAGE_FOLDER));
 		});
 		System.out.println(directoriesToCopy);
 		
-		String TIBPath = findTIBFileStartingWith(image.getTIBName(), ImageConstants.IMAGE_FOLDER);
+		String TIBPath = findTIBFileStartingWith(getImage().getTIBName(), ImageConstants.IMAGE_FOLDER);
 		
 		System.out.println(TIBPath);
 		
-		copyFileToUsbRoot(destination, TIBPath);
+		copyFileToUsbRoot(getDestination(), TIBPath);
 		
 		directoriesToCopy.forEach(dir ->{
 			try {
-				this.copyDirectoryAndContentsToDestination(dir, destination);
+				this.copyDirectoryAndContentsToDestination(dir, getDestination());
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -41,33 +45,38 @@ public class ImageCopier {
 
 	private void copyFileToUsbRoot(String destination, String TIBPath) {
 		try {
-		  // Executing the command
-		  Process powerShellProcess = Runtime.getRuntime().exec(new String[]{"powershell.exe", "/c","Copy-Item \""+TIBPath+"\" -Destination \""+destination+"\""});
-		  
-		  // printing the results
-		  powerShellProcess.getOutputStream().close();
-		  String line;
-		  System.out.println("Standard Output:");
-		  BufferedReader stdout = new BufferedReader(new InputStreamReader(
-		    powerShellProcess.getInputStream()));
-		  while ((line = stdout.readLine()) != null) {
-		   System.out.println(line);
-		  }
-		  stdout.close();
-		  
-		  //Print out errors
-		  System.out.println("Standard Error:");
-		  BufferedReader stderr = new BufferedReader(new InputStreamReader(
-		    powerShellProcess.getErrorStream()));
-		  while ((line = stderr.readLine()) != null) {
-		   System.out.println(line);
-		  }
-		  stderr.close();
-		  System.out.println("Done");
+			TIBPath =this.formatPathForPowerShell(TIBPath);
+			// Executing the command
+			Process powerShellProcess = Runtime.getRuntime().exec(new String[]{"powershell.exe", "/c","Copy-Item '"+TIBPath+"' -Destination '"+destination+"'"});
+			  
+			    // printing the results
+			powerShellProcess.getOutputStream().close();
+			String line;
+			System.out.println("Standard Output:");
+			    BufferedReader stdout = new BufferedReader(new InputStreamReader(
+			      powerShellProcess.getInputStream()));
+			    while ((line = stdout.readLine()) != null) {
+			     System.out.println(line);
+			    }
+			    stdout.close();
+			  
+			    //Print out errors
+			System.out.println("Standard Error:");
+			BufferedReader stderr = new BufferedReader(new InputStreamReader(
+			  powerShellProcess.getErrorStream()));
+			while ((line = stderr.readLine()) != null) {
+			 System.out.println(line);
+			}
+			stderr.close();
+			System.out.println("Done");
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+
+	private String formatPathForPowerShell(String path) {
+		return path.replace("&", "\"&\"");
 	}
 
 	private String findTIBFileStartingWith(String startingPartOfFile, String imageFolder) {
@@ -147,4 +156,20 @@ public class ImageCopier {
             e.printStackTrace();
         }
     }
+
+	public String getDestination() {
+		return destination;
+	}
+
+	public void setDestination(String destination) {
+		this.destination = destination;
+	}
+
+	public Image getImage() {
+		return image;
+	}
+
+	public void setImage(Image image) {
+		this.image = image;
+	}
 }

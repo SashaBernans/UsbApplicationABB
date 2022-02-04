@@ -3,6 +3,7 @@ package app.controller;
 import app.image.Image;
 import app.image.ImageCopier;
 import app.image.UsbFormatter;
+import app.view.CopyFilesView;
 import app.view.IView;
 import app.view.MainView;
 
@@ -10,9 +11,9 @@ public class MainController implements IMainController {
 	
 	private ImageCopier imageCopier;
 	private UsbFormatter usbFormatter;
+	private ICopyFilesController copyFilesController;
 	
 	public MainController() {
-		this.imageCopier = new ImageCopier();
 		this.usbFormatter = new UsbFormatter();
 	}
 
@@ -30,7 +31,9 @@ public class MainController implements IMainController {
 
 	@Override
 	public void createImage(Image image, String usbPath) {
-			this.imageCopier.copyImageToUsb(image, usbPath);
+		ImageCopier copier = new ImageCopier(image,usbPath);
+		ICopyFilesController filesController = new CopyFilesController(copier);
+		IView copyView = new CopyFilesView(filesController);
 	}
 
 	@Override
