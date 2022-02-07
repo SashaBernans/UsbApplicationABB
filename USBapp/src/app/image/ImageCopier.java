@@ -3,15 +3,21 @@ package app.image;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Stream;
 
-public class ImageCopier {
+import javax.swing.SwingWorker;
+
+public class ImageCopier extends SwingWorker{
 	private Image image;
 	private String destination;
+	private boolean isDone = false;
 	
 	public ImageCopier(Image image, String destination) {
 		this.setImage(image);
@@ -19,6 +25,8 @@ public class ImageCopier {
 	}
 
 	public void copyImageToUsb()  {
+		
+		this.formatUsbDrive();
 		ArrayList<String> directoriesToCopy = new ArrayList<String>();
 		getImage().getSoftwareFolderNames().forEach(folder ->{
 			directoriesToCopy.addAll(this.findDirectoryStartingWith(folder, ImageConstants.IMAGE_FOLDER));
@@ -29,18 +37,34 @@ public class ImageCopier {
 		
 		System.out.println(TIBPath);
 		
+		this.writeCustumerInformationToFile();
+		/*
 		copyFileToUsbRoot(getDestination(), TIBPath);
 		
 		directoriesToCopy.forEach(dir ->{
-			try {
-				this.copyDirectoryAndContentsToDestination(dir, getDestination());
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			this.copyDirectoryAndContentsToDestination(dir, getDestination());
 		});
-		
-		//renameDrive(image.getWorkOrder(), destination);
+		*/
+		//Notify controller that this thread is completed
+		this.isDone = true;
+	}
+
+	private void writeCustumerInformationToFile() {
+	    List<String> lines = Arrays.asList("Sales Order: "+this.image.getSalesOrder(),
+	    		"Work Order: "+this.image.getWorkOrder(),
+	    		"Customer's name: "+image.getCustomerName(),
+	    		"Description: "+image.getDescription());
+	    Path file = Paths.get(destination+this.image.getSalesOrder()+"_"+this.image.getWorkOrder()+".txt");
+	    try {
+			Files.write(file, lines, StandardCharsets.UTF_8);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private void formatUsbDrive() {
+		UsbFormatter formatter = new UsbFormatter(this.destination, this.image.getWorkOrder());
+		formatter.formatToNTFS();
 	}
 
 	private void copyFileToUsbRoot(String destination, String TIBPath) {
@@ -49,7 +73,7 @@ public class ImageCopier {
 			// Executing the command
 			Process powerShellProcess = Runtime.getRuntime().exec(new String[]{"powershell.exe", "/c","Copy-Item '"+TIBPath+"' -Destination '"+destination+"'"});
 			  
-			    // printing the results
+			// printing the results
 			powerShellProcess.getOutputStream().close();
 			String line;
 			System.out.println("Standard Output:");
@@ -60,7 +84,7 @@ public class ImageCopier {
 			    }
 			    stdout.close();
 			  
-			    //Print out errors
+			//Print out errors
 			System.out.println("Standard Error:");
 			BufferedReader stderr = new BufferedReader(new InputStreamReader(
 			  powerShellProcess.getErrorStream()));
@@ -70,7 +94,6 @@ public class ImageCopier {
 			stderr.close();
 			System.out.println("Done");
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -86,8 +109,7 @@ public class ImageCopier {
 		if(folderPath.isEmpty()) {
 			pathOfDirectory = ImageConstants.IMAGE_FOLDER;
 		}
-		else
-		{
+		else{
 			pathOfDirectory = folderPath.get(0);
 		}
 		
@@ -101,15 +123,6 @@ public class ImageCopier {
 		return files.get(0);
 	}
 
-	private void renameDrive(String workOrder, String drive) {
-		try {
-			Runtime.getRuntime().exec("label "+drive.replace("\\","")+" "+workOrder);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-	
 	private ArrayList<String> findDirectoryStartingWith(String startingPartOfDirectory, String sourceDirectoryLocation) {
 		ArrayList<String> files = new ArrayList<String>();
 			walkReadable(Paths.get(sourceDirectoryLocation))
@@ -129,7 +142,6 @@ public class ImageCopier {
 				try {
 					return Files.list(p);
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}
@@ -138,12 +150,16 @@ public class ImageCopier {
 		return Stream.of(p);
     }
 
-	private void copyDirectoryAndContentsToDestination(String sourceDirectory,String destinationDirectory) throws IOException {
+	private void copyDirectoryAndContentsToDestination(String sourceDirectory,String destinationDirectory){
         Path fromPath = Paths.get(sourceDirectory);
         Path toPath = Paths.get(destinationDirectory);
 
-        Files.walk(fromPath)
-             .forEach(source -> copySourceToDest(fromPath, source,toPath));
+        try {
+			Files.walk(fromPath)
+			     .forEach(source -> copySourceToDest(fromPath, source,toPath));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
     }
 
     private static void copySourceToDest(Path fromPath, Path source,Path toPath) {
@@ -171,5 +187,11 @@ public class ImageCopier {
 
 	public void setImage(Image image) {
 		this.image = image;
+	}
+
+	@Override
+	protected Object doInBackground() throws Exception {
+		this.copyImageToUsb();
+		return null;
 	}
 }

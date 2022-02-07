@@ -27,6 +27,10 @@ import app.controller.IMainController;
 import app.image.Image;
 import app.image.ImageConstants;
 
+/**
+ * @author Sasha Bernans
+ *This is the main menu of the application if this window is closed the application exits.
+ */
 public class MainView extends JFrame implements IView, ActionListener{
 	
 	private static final String FTSWAERI_BOX = "FTSWAERI";
@@ -76,8 +80,12 @@ public class MainView extends JFrame implements IView, ActionListener{
 	private JButton cancelButton = new JButton(CANCEL_BUTTON_TEXT);
 	private JComboBox<File> usbDropDownList = new JComboBox<File>();
 
+	/**
+	 * This JFrame must be given a controller to communicate with other classes.
+	 * @param controller
+	 */
 	public MainView(IMainController controller) {
-		super(APPLICATION_NAME);
+		super(APPLICATION_NAME); // sets application name.
 		
 		this.controller = controller;
 		
@@ -85,12 +93,21 @@ public class MainView extends JFrame implements IView, ActionListener{
 		this.setUpComponents();
 	}
 	
+	/**
+	 * Sets this JFrame's default properties
+	 */
 	private void initialize() {
 		this.setSize(WINDOW_WIDTH,WINDOW_HEIGHT);
-		this.setLayout(new GridLayout(3,1,0,0));
+		this.setLayout(new GridLayout(3,1,0,0)); // 3 rows 1 column
+		
+		//exits app on close window action
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 	}
 
+	
+	/**
+	 * Adds Panels to this JFrame
+	 */
 	private void setUpComponents() {
 		this.setUsbDrives();
 		this.setUpSelectionPanel();
@@ -98,11 +115,15 @@ public class MainView extends JFrame implements IView, ActionListener{
 		this.setUpButtonPanel();
 	}
 
+	/**
+	 * Adds a panel with action buttons to the JFrame (Create, Settings, Cancel)
+	 */
 	private void setUpButtonPanel() {
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER,70,70));
 		this.add(buttonPanel);
 		
+		//Add this class as an actionListener to the buttons and sets action command.
 		this.settingsButton.addActionListener(this);
 		this.settingsButton.setActionCommand(SETTINGS_ACTION_COMMAND);
 		this.createButton.addActionListener(this);
@@ -115,9 +136,12 @@ public class MainView extends JFrame implements IView, ActionListener{
 		buttonPanel.add(this.cancelButton);
 	}
 
+	/**
+	 * Adds the panel to select usb drive, computer type and software.
+	 */
 	private void setUpSelectionPanel() {
 		JPanel selectionPanel = new JPanel();
-		selectionPanel.setLayout(new GridLayout(2,2,0,0));
+		selectionPanel.setLayout(new GridLayout(2,2,0,0)); //2 rows 2 columns
 		this.add(selectionPanel);
 		
 		JLabel selectUsbMessage = new JLabel(SELECT_USB_DRIVE_MESSAGE);
@@ -130,17 +154,20 @@ public class MainView extends JFrame implements IView, ActionListener{
 		this.setUpSoftwarePanel(selectionPanel);
 	}
 
+	/**
+	 * This method detects the usb drives and adds the letters to the dropDownList.
+	 */
 	private void setUsbDrives() {
 		File[] paths;
 		String driveType;
-		// returns pathnames for files and directory
+		// Gets all drives
 		paths = File.listRoots();
 		
 		FileSystemView fsv = FileSystemView.getFileSystemView();
 		// for each pathname in pathname array
 		for(File path:paths)
 		{
-		    // add file to comboBox
+		    // add file to comboBox if file is usb Drive
 			driveType = fsv.getSystemTypeDescription(path);
 			if(driveType.equals("USB Drive")) {
 				this.usbDropDownList.addItem(path);
@@ -148,6 +175,9 @@ public class MainView extends JFrame implements IView, ActionListener{
 		}
 	}
 
+	/**
+	 * This method adds the input fields for the user to fill out (sales order, work order, customer name, description).
+	 */
 	private void setUpCustomerInformationPanel() {
 		JPanel customerInformationPanel = new JPanel();
 		customerInformationPanel.setLayout(new GridLayout(9,1,0,0));
@@ -182,9 +212,13 @@ public class MainView extends JFrame implements IView, ActionListener{
 		customerInformationPanel.add(this.descriptionInput);
 	}
 
+	/**
+	 * This method adds the software selection to the selection panel.
+	 * @param selectionPanel
+	 */
 	private void setUpSoftwarePanel(JPanel selectionPanel) {
 		JPanel softwarePanel = new JPanel();
-		softwarePanel.setLayout(new GridLayout(5,1,0,0));
+		softwarePanel.setLayout(new GridLayout(5,1,0,0)); // 5 rows 1 column
 		selectionPanel.add(softwarePanel);
 		
 		JLabel selectSoftwareMessage = new JLabel(SELECT_SOFTWARE_MESSAGE);
@@ -197,9 +231,13 @@ public class MainView extends JFrame implements IView, ActionListener{
 		softwarePanel.add(this.HoMB_Box);
 	}
 
+	/**
+	 * This method adds the computer type selection to the selection panel.
+	 * @param selectionPanel
+	 */
 	private void setUpComputerTypePanel(JPanel selectionPanel) {
 		JPanel computerTypePanel = new JPanel();
-		computerTypePanel.setLayout(new GridLayout(6,1,0,0));
+		computerTypePanel.setLayout(new GridLayout(6,1,0,0)); // 6 rows 1 column
 		selectionPanel.add(computerTypePanel);
 		
 		JLabel selectComputerMessage = new JLabel(SELECT_COMPUTER_MESSAGE);
@@ -213,6 +251,9 @@ public class MainView extends JFrame implements IView, ActionListener{
 		computerTypePanel.add(this.panasonicBox);
 	}
 
+	/**
+	 * Handles the button actions
+	 */
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		switch(e.getActionCommand()) {
@@ -220,51 +261,67 @@ public class MainView extends JFrame implements IView, ActionListener{
 			this.controller.goToSettings();
 			break;
 		case CREATE_ACTION_COMMAND:
-			this.createImage();
+			this.validateUserInputs();
 			break;
 		case CANCEL_ACTION_COMMAND:
 			this.dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
 		}
 	}
 
-	private void createImage() {
+	/**
+	 *  This method validates that the user inputs are respecting the constraints.
+	 */
+	private void validateUserInputs() {
 		
-		controller.formatDrive(this.usbDropDownList.getSelectedItem().toString(),this.workOrderInput.getText());
-		
-		//Prevents FTSWAERI to be selected without laptop type
+		//Prevents FTSWAERI to be selected without laptop type and notifies user.
 		if(!this.laptopBox.getState()&& this.FTSWAERI_Box.getState()) {
 			JOptionPane.showMessageDialog(this,
 				    "FAILED -FTSWAERI can only be selected with laptop computer type",
 				    "ERROR",
 				    JOptionPane.WARNING_MESSAGE);
 		}
+		//Prevents Industrial computer type to be selected without FTSW100 and notifies user.
 		else if(this.industrialComputorBox.getState() && !this.FTW100_Box.getState()) {
 			JOptionPane.showMessageDialog(this,
 				    "FAILED -FTSW100 must be selected with Industrial computer type",
 				    "ERROR",
 				    JOptionPane.WARNING_MESSAGE);
 		}
+		//Prevents Rack-PC type to be selected without FTSW100 and notifies user.
 		else if(this.rackPCBox.getState() && !this.FTW100_Box.getState()) {
 			JOptionPane.showMessageDialog(this,
 				    "FAILED -FTSW100 must be selected with Rack-PC type",
 				    "ERROR",
 				    JOptionPane.WARNING_MESSAGE);
 		}
+		//Prevents creation if no USB drive is selected.
+		else if(this.usbDropDownList.getSelectedItem()==null) {
+			JOptionPane.showMessageDialog(this,
+				    "FAILED -A USB drive must be selected",
+				    "ERROR",
+				    JOptionPane.WARNING_MESSAGE);
+		}
 		else if(this.desktopBox.getState()){
+			this.disableButtons();
 			this.createDesktopImage();
 		}
 		else if(this.laptopBox.getState()) {
+			this.disableButtons();
 			this.createLaptopImage();
 		}
 		else if(this.industrialComputorBox.getState()) {
+			this.disableButtons();
 			this.createIndustrialComputerImage();
 		}
 		else if(this.rackPCBox.getState()) {
+			this.disableButtons();
 			this.createRackPCImage();
 		}
 		else if(this.panasonicBox.getState()) {
+			this.disableButtons();
 			this.createPanasonicImage();
 		}
+		//Prevents creation if no computer type is selected and notifies user.
 		else{
 			JOptionPane.showMessageDialog(this,
 				    "FAILED -No computer type selected.",
@@ -273,6 +330,18 @@ public class MainView extends JFrame implements IView, ActionListener{
 		}
 	}
 	
+	/**
+	 * This will disable buttons when creating image to prevent conflicts when copying files.
+	 */
+	private void disableButtons() {
+		this.createButton.setEnabled(false);
+		this.settingsButton.setEnabled(false);
+		this.cancelButton.setEnabled(false);
+	}
+
+	/**
+	 * Creates image object and sends it too the controller.
+	 */
 	private void createPanasonicImage() {
 		Image image = new Image(
 				ImageConstants.PANASONIC,
@@ -285,6 +354,9 @@ public class MainView extends JFrame implements IView, ActionListener{
 		controller.createImage(image, usbDropDownList.getSelectedItem().toString());
 	}
 
+	/**
+	 * Creates image object and sends it too the controller.
+	 */
 	private void createRackPCImage() {
 		Image image = new Image(
 				ImageConstants.RACK_PC,
@@ -297,6 +369,9 @@ public class MainView extends JFrame implements IView, ActionListener{
 		controller.createImage(image, usbDropDownList.getSelectedItem().toString());
 	}
 
+	/**
+	 * Creates image object and sends it too the controller.
+	 */
 	private void createIndustrialComputerImage() {
 		Image image = new Image(
 				ImageConstants.INDUSTRIAL_COMPUTER,
@@ -309,6 +384,9 @@ public class MainView extends JFrame implements IView, ActionListener{
 		controller.createImage(image, usbDropDownList.getSelectedItem().toString());
 	}
 
+	/**
+	 * Creates image object and sends it too the controller.
+	 */
 	private void createLaptopImage() {
 		String TIBPath = null;
 		if(this.FTSWAERI_Box.getState()) {
@@ -331,6 +409,9 @@ public class MainView extends JFrame implements IView, ActionListener{
 		controller.createImage(image, usbDropDownList.getSelectedItem().toString());
 	}
 
+	/**
+	 * Creates image object and sends it too the controller.
+	 */
 	private void createDesktopImage() {
 		String TIBPath = null;
 		if(this.FTW100_Box.getState()){
@@ -350,6 +431,9 @@ public class MainView extends JFrame implements IView, ActionListener{
 		controller.createImage(image, usbDropDownList.getSelectedItem().toString());
 	}
 	
+	/**
+	 * @return the start of the right softwares directories selected by the user.
+	 */
 	private ArrayList<String> getSoftwareFolderNames() {
 		ArrayList<String> softwarePaths = new ArrayList<String>();
 		if(this.FTSWAERI_Box.getState()) {

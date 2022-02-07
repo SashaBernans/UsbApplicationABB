@@ -4,12 +4,18 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-public class UsbFormatter {
-	public UsbFormatter() {
-		
+import javax.swing.SwingWorker;
+
+public class UsbFormatter{
+	private String drive;
+	private String workOrder;
+	
+	public UsbFormatter(String drive, String workOrder) {
+		this.drive = drive;
+		this.workOrder = workOrder;
 	}
 	
-	public void formatToNTFS(String drive, String workOrder) {
+	public void formatToNTFS() {
 		String letter = drive.replace("\\","");
 		try {
 			//execute format process in command promtp
