@@ -10,6 +10,5 @@ public interface IMainController {
 
 	void goToSettings();
 
-	void createImage(Image image, String usbPath);
-
+	void goToCopyFilesView(Image image, String usbPath);
 }

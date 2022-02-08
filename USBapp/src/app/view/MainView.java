@@ -33,6 +33,11 @@ import app.model.ImageConstants;
  */
 public class MainView extends JFrame implements IView, ActionListener{
 	
+	private static final String FTSWAERI_SELECTED_WITH_OTHER_THAN_LAPTOP = "FTSWAERI can only be selected with laptop computer type";
+	private static final String FNO_FTSW100_SELECTED_WITH_INDUSTRIAL_COMPUTER_MESSAGE = "FTSW100 must be selected with Industrial computer type";
+	private static final String NO_FTSW100_SELECTED_WITH_RACK_PC_MESSAGE = "FTSW100 must be selected with Rack-PC type";
+	private static final String NO_USB_SELECTED_MESSAGE = "A USB drive must be selected";
+	private static final String NO_COMPUTER_SELECTED_MESSAGE = "No computer type selected.";
 	private static final String FTSWAERI_BOX = "FTSWAERI";
 	private static final String PANASONIC_BOX = "Panasonic";
 	private static final String CANCEL_ACTION_COMMAND = "create";
@@ -276,65 +281,45 @@ public class MainView extends JFrame implements IView, ActionListener{
 		
 		//Prevents FTSWAERI to be selected without laptop type and notifies user.
 		if(!this.laptopBox.getState()&& this.FTSWAERI_Box.getState()) {
-			JOptionPane.showMessageDialog(this,
-				    "FAILED -FTSWAERI can only be selected with laptop computer type",
-				    "ERROR",
-				    JOptionPane.WARNING_MESSAGE);
+			this.alertUser(FTSWAERI_SELECTED_WITH_OTHER_THAN_LAPTOP);
 		}
 		//Prevents Industrial computer type to be selected without FTSW100 and notifies user.
 		else if(this.industrialComputorBox.getState() && !this.FTW100_Box.getState()) {
-			JOptionPane.showMessageDialog(this,
-				    "FAILED -FTSW100 must be selected with Industrial computer type",
-				    "ERROR",
-				    JOptionPane.WARNING_MESSAGE);
+			this.alertUser(FNO_FTSW100_SELECTED_WITH_INDUSTRIAL_COMPUTER_MESSAGE);
 		}
 		//Prevents Rack-PC type to be selected without FTSW100 and notifies user.
 		else if(this.rackPCBox.getState() && !this.FTW100_Box.getState()) {
-			JOptionPane.showMessageDialog(this,
-				    "FAILED -FTSW100 must be selected with Rack-PC type",
-				    "ERROR",
-				    JOptionPane.WARNING_MESSAGE);
+			this.alertUser(NO_FTSW100_SELECTED_WITH_RACK_PC_MESSAGE);
 		}
 		//Prevents creation if no USB drive is selected.
 		else if(this.usbDropDownList.getSelectedItem()==null) {
-			JOptionPane.showMessageDialog(this,
-				    "FAILED -A USB drive must be selected",
-				    "ERROR",
-				    JOptionPane.WARNING_MESSAGE);
+			this.alertUser(NO_USB_SELECTED_MESSAGE);
 		}
 		else if(this.desktopBox.getState()){
-			this.disableButtons();
 			this.createDesktopImage();
 		}
 		else if(this.laptopBox.getState()) {
-			this.disableButtons();
 			this.createLaptopImage();
 		}
 		else if(this.industrialComputorBox.getState()) {
-			this.disableButtons();
 			this.createIndustrialComputerImage();
 		}
 		else if(this.rackPCBox.getState()) {
-			this.disableButtons();
 			this.createRackPCImage();
 		}
 		else if(this.panasonicBox.getState()) {
-			this.disableButtons();
 			this.createPanasonicImage();
 		}
 		//Prevents creation if no computer type is selected and notifies user.
 		else{
-			JOptionPane.showMessageDialog(this,
-				    "FAILED -No computer type selected.",
-				    "ERROR",
-				    JOptionPane.WARNING_MESSAGE);
+			this.alertUser(NO_COMPUTER_SELECTED_MESSAGE);
 		}
 	}
 	
 	/**
-	 * This will disable buttons when creating image to prevent conflicts when copying files.
+	 * This will disable buttons.
 	 */
-	private void disableButtons() {
+	public void disableButtons() {
 		this.createButton.setEnabled(false);
 		this.settingsButton.setEnabled(false);
 		this.cancelButton.setEnabled(false);
@@ -352,7 +337,7 @@ public class MainView extends JFrame implements IView, ActionListener{
 				this.customerNameInput.getText(),
 				this.descriptionInput.getText()
 				);
-		controller.createImage(image, usbDropDownList.getSelectedItem().toString());
+		controller.goToCopyFilesView(image, usbDropDownList.getSelectedItem().toString());
 	}
 
 	/**
@@ -367,7 +352,7 @@ public class MainView extends JFrame implements IView, ActionListener{
 				this.customerNameInput.getText(),
 				this.descriptionInput.getText()
 				);
-		controller.createImage(image, usbDropDownList.getSelectedItem().toString());
+		controller.goToCopyFilesView(image, usbDropDownList.getSelectedItem().toString());
 	}
 
 	/**
@@ -382,7 +367,7 @@ public class MainView extends JFrame implements IView, ActionListener{
 				this.customerNameInput.getText(),
 				this.descriptionInput.getText()
 				);
-		controller.createImage(image, usbDropDownList.getSelectedItem().toString());
+		controller.goToCopyFilesView(image, usbDropDownList.getSelectedItem().toString());
 	}
 
 	/**
@@ -407,7 +392,7 @@ public class MainView extends JFrame implements IView, ActionListener{
 				this.customerNameInput.getText(),
 				this.descriptionInput.getText()
 				);
-		controller.createImage(image, usbDropDownList.getSelectedItem().toString());
+		controller.goToCopyFilesView(image, usbDropDownList.getSelectedItem().toString());
 	}
 
 	/**
@@ -429,7 +414,7 @@ public class MainView extends JFrame implements IView, ActionListener{
 				this.customerNameInput.getText(),
 				this.descriptionInput.getText()
 				);
-		controller.createImage(image, usbDropDownList.getSelectedItem().toString());
+		controller.goToCopyFilesView(image, usbDropDownList.getSelectedItem().toString());
 	}
 	
 	/**
@@ -455,5 +440,18 @@ public class MainView extends JFrame implements IView, ActionListener{
 	@Override
 	public void display() {
 		this.setVisible(true);
+	}
+
+	/**
+	 * This method alerts the user with a pop up error message.
+	 * @param error : message that will be displayed on pop up.
+	 */
+	public void alertUser(String error) {
+		if(error!=null) {
+		JOptionPane.showMessageDialog(this,
+			    "FAILED -"+error,
+			    "ERROR",
+			    JOptionPane.WARNING_MESSAGE);
+		}
 	}
 }
