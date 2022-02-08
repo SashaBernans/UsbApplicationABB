@@ -14,7 +14,7 @@ import javax.swing.JOptionPane;
 import app.controller.ICopyFilesController;
 
 /**
- * @author CASABER
+ * @author Sasha Bernans
  *
  */
 public class CopyFilesView extends JFrame implements IView, ActionListener{
@@ -29,17 +29,14 @@ public class CopyFilesView extends JFrame implements IView, ActionListener{
 		this.initialize();
 		this.setUpComponents();
 		this.display();
-		this.startCopier();
-	}
-
-	private void startCopier() {
-		controller.copyFiles();
 	}
 
 	private void setUpComponents() {
-		//adds loading gif image
+		//adds loading gif image to the frame.
 		ImageIcon loading = new ImageIcon(getClass().getResource("optimized.gif"));
 		JLabel gif = new JLabel("Copying files to USB drive...", loading, JLabel.CENTER);
+		
+		//Adds warning to not turn system off.
 		JLabel warning = new JLabel("Do not turn off system this may take a few minutes", JLabel.CENTER);
 		warning.setFont(new Font("Serif",Font.PLAIN,14));
 	    this.add(gif);
@@ -51,10 +48,9 @@ public class CopyFilesView extends JFrame implements IView, ActionListener{
 	 */
 	private void initialize() {
 		this.setSize(WINDOW_WIDTH,WINDOW_HEIGHT);
-		this.setLayout(new GridLayout(2,1,0,0));//2 rows 
+		this.setLayout(new GridLayout(2,1,0,0));//2 rows 1 column
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		this.setResizable(false);
-		this.setVisible(true);
 		this.toFront();
 		this.requestFocus();
 	}

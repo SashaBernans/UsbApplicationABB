@@ -24,8 +24,8 @@ import javax.swing.SwingConstants;
 import javax.swing.filechooser.FileSystemView;
 
 import app.controller.IMainController;
-import app.image.Image;
-import app.image.ImageConstants;
+import app.model.Image;
+import app.model.ImageConstants;
 
 /**
  * @author Sasha Bernans
@@ -99,6 +99,7 @@ public class MainView extends JFrame implements IView, ActionListener{
 	private void initialize() {
 		this.setSize(WINDOW_WIDTH,WINDOW_HEIGHT);
 		this.setLayout(new GridLayout(3,1,0,0)); // 3 rows 1 column
+		this.setResizable(false);
 		
 		//exits app on close window action
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -340,7 +341,7 @@ public class MainView extends JFrame implements IView, ActionListener{
 	}
 
 	/**
-	 * Creates image object and sends it too the controller.
+	 * Creates panasonic image object and sends it too the controller.
 	 */
 	private void createPanasonicImage() {
 		Image image = new Image(
@@ -355,7 +356,7 @@ public class MainView extends JFrame implements IView, ActionListener{
 	}
 
 	/**
-	 * Creates image object and sends it too the controller.
+	 * Creates Rack pc image object and sends it too the controller.
 	 */
 	private void createRackPCImage() {
 		Image image = new Image(
@@ -370,7 +371,7 @@ public class MainView extends JFrame implements IView, ActionListener{
 	}
 
 	/**
-	 * Creates image object and sends it too the controller.
+	 * Creates Industrial computer image object and sends it too the controller.
 	 */
 	private void createIndustrialComputerImage() {
 		Image image = new Image(
@@ -385,7 +386,7 @@ public class MainView extends JFrame implements IView, ActionListener{
 	}
 
 	/**
-	 * Creates image object and sends it too the controller.
+	 * Creates laptop image object and sends it too the controller.
 	 */
 	private void createLaptopImage() {
 		String TIBPath = null;
@@ -410,7 +411,7 @@ public class MainView extends JFrame implements IView, ActionListener{
 	}
 
 	/**
-	 * Creates image object and sends it too the controller.
+	 * Creates desktop image object and sends it too the controller.
 	 */
 	private void createDesktopImage() {
 		String TIBPath = null;
