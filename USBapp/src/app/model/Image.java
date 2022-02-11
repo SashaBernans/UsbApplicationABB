@@ -2,6 +2,12 @@ package app.model;
 
 import java.util.ArrayList;
 
+/**
+ * This class represents an Image data model. It contains the paths to files and folders of the software and image
+ * that the user specified in the MainView. It also contains the customer information filled out by the user.
+ * @author Sasha Bernans
+ *
+ */
 public class Image {
 	
 	private String TIBName;

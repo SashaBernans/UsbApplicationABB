@@ -2,15 +2,18 @@ package app.controller;
 
 import app.model.Image;
 import app.model.ImageCopier;
-import app.view.IView;
 import app.view.MainView;
 
-public class MainController implements IMainController {
+/**
+ * @author Sasha Bernans
+ *This class communicates between the MainView and the other controllers. It also does basic input validation for the mainView.
+ */
+public class MainController {
 	
 	private static final int WORK_ORDER_MINIMUM_LENTGH = 7;
 	private static final int SALES_ORDER_REQUIRED_LENGTH = 6;
 	private ImageCopier imageCopier;
-	private ICopyFilesController copyFilesController;
+	private CopyFilesController copyFilesController;
 	private MainView mainView;
 	
 	public MainController() {
@@ -19,34 +22,42 @@ public class MainController implements IMainController {
 	/**
 	 *Displays the mainMenu
 	 */
-	@Override
 	public void startApplication() {
 		this.mainView = new MainView(this);
 		mainView.display();
 	}
 
-	@Override
+	/**
+	 * Creates the settings controller that will then create the settings view
+	 */
 	public void goToSettings() {
-		System.out.println("no settings yet");
+		SettingsController settings = new SettingsController();
 	}
 
 	/**
-	 *Creates the image copier and gives it the image to copy, then creates the controller to communicate
-	 *with copyFilesView.
+	 * This creates a ImageCopier and the controller that will create copyFilesView.
+	 * @param image : image object to be passed to the imageCopier
+	 * @param usbPath : the drive path to be passed to the imageCopier
 	 */
-	@Override
 	public void goToCopyFilesView(Image image, String usbPath) {
-		if(this.customerInformationIsValid(image, usbPath)) {
+		//verify customer information before continuing
+		if(this.customerInformationIsValid(image)) {
+			
+			//Disables buttons in mainMenu to avoid conflicts
 			this.mainView.disableButtons();
+			
 			this.imageCopier = new ImageCopier(image,usbPath);
 			this.copyFilesController = new CopyFilesController(this.imageCopier);
 		}
 	}
 
+	
 	/**
-	 *Validates the user information inputs
+	 * Validates the customer information
+	 * @param image : the image that contains the character information to verify
+	 * @return true if customerInformation is valid false if not
 	 */
-	private boolean customerInformationIsValid(Image image, String usbPath) {
+	private boolean customerInformationIsValid(Image image) {
 		String error = null;
 		boolean isValid = true;
 		//verify sales order character number
@@ -54,14 +65,17 @@ public class MainController implements IMainController {
 			error = "Sales order must be 6 characters long";
 			isValid = false;
 		}
+		//verify work order character number
 		if(image.getWorkOrder().length()<WORK_ORDER_MINIMUM_LENTGH) {
 			error = "Work order must be at least 7 characters long";
 			isValid = false;
 		}
+		//verify work order is only numbers
 		if(!image.getWorkOrder().matches("\\d+")) {
 			error = "Work order can only be numbers or -";
 			isValid = false;
 		}
+		//Alerts user if error is not null
 		this.mainView.alertUser(error);
 		return isValid;
 	}

@@ -4,26 +4,32 @@ import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.concurrent.TimeUnit;
 
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 
-import app.controller.ICopyFilesController;
+import app.controller.CopyFilesController;
 
 /**
  * @author Sasha Bernans
  *
  */
-public class CopyFilesView extends JFrame implements IView, ActionListener{
+public class CopyFilesView extends JFrame implements ActionListener{
 
+	private static final String INSTALLATION_SUCCESS_MESSAGE = "Installation completed successfully.";
+	private static final String SYSTEM_WARNING = "Do not turn off system this may take a few minutes";
+	private static final String SPINNER_PATH = "optimized.gif";
+	private static final String COPYING_FILES_MESSAGE = "Copying files to USB drive...";
 	private static final int WINDOW_WIDTH = 350;
 	private static final int WINDOW_HEIGHT = 150;
-	private ICopyFilesController controller;
+	private CopyFilesController controller;
 
-	public CopyFilesView(ICopyFilesController filesController) {
+	/**
+	 * @param filesController : this will communicate with the imageCopier
+	 */
+	public CopyFilesView(CopyFilesController filesController) {
 		this.controller = filesController;
 		
 		this.initialize();
@@ -31,20 +37,23 @@ public class CopyFilesView extends JFrame implements IView, ActionListener{
 		this.display();
 	}
 
+	/**
+	 * Sets up text and images in the frame
+	 */
 	private void setUpComponents() {
-		//adds loading gif image to the frame.
-		ImageIcon loading = new ImageIcon(getClass().getResource("optimized.gif"));
-		JLabel gif = new JLabel("Copying files to USB drive...", loading, JLabel.CENTER);
+		//Adds loading gif image to the frame.
+		ImageIcon loading = new ImageIcon(getClass().getResource(SPINNER_PATH));
+		JLabel gif = new JLabel(COPYING_FILES_MESSAGE, loading, JLabel.CENTER);
 		
 		//Adds warning to not turn system off.
-		JLabel warning = new JLabel("Do not turn off system this may take a few minutes", JLabel.CENTER);
+		JLabel warning = new JLabel(SYSTEM_WARNING, JLabel.CENTER);
 		warning.setFont(new Font("Serif",Font.PLAIN,14));
 	    this.add(gif);
 	    this.add(warning);
 	}
 
 	/**
-	 * set default JFrame settings
+	 * Set default JFrame settings
 	 */
 	private void initialize() {
 		this.setSize(WINDOW_WIDTH,WINDOW_HEIGHT);
@@ -59,8 +68,6 @@ public class CopyFilesView extends JFrame implements IView, ActionListener{
 	public void actionPerformed(ActionEvent e) {
 		
 	}
-
-	@Override
 	public void display() {
 		this.setVisible(true);
 	}
@@ -70,7 +77,7 @@ public class CopyFilesView extends JFrame implements IView, ActionListener{
 	 */
 	public void completed() {
 		JOptionPane.showMessageDialog(this,
-			    "Installation completed successfully.",
+			    INSTALLATION_SUCCESS_MESSAGE,
 			    "Completed",
 			    JOptionPane.PLAIN_MESSAGE);
 		this.dispose();

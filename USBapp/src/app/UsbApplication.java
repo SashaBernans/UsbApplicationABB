@@ -1,11 +1,15 @@
 package app;
 
-import app.controller.IMainController;
+import javax.swing.JOptionPane;
+
+import app.config.ConfigManager;
 import app.controller.MainController;
 
 public class UsbApplication {
 
 		public static void main(String args[]){
+			System.out.println(ConfigManager.getString("defaultPath"));
+			JOptionPane.showConfirmDialog(null, ConfigManager.getString("defaultPath"));
 			new UsbApplication();
 	    }
 		
@@ -14,7 +18,7 @@ public class UsbApplication {
 		}
 		
 		private void createControllers() {
-			IMainController appController = new MainController();
+			MainController appController = new MainController();
 			appController.startApplication();
 		}
 }

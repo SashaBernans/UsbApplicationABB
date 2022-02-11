@@ -10,28 +10,28 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.List;
 
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.filechooser.FileSystemView;
 
-import app.controller.IMainController;
+import app.controller.MainController;
 import app.model.Image;
-import app.model.ImageConstants;
+import app.model.Constants;
 
 /**
  * @author Sasha Bernans
  *This is the main menu of the application if this window is closed the application exits.
  */
-public class MainView extends JFrame implements IView, ActionListener{
+public class MainView extends JFrame implements ActionListener{
 	
 	private static final String FTSWAERI_SELECTED_WITH_OTHER_THAN_LAPTOP = "FTSWAERI can only be selected with laptop computer type";
 	private static final String FNO_FTSW100_SELECTED_WITH_INDUSTRIAL_COMPUTER_MESSAGE = "FTSW100 must be selected with Industrial computer type";
@@ -62,9 +62,9 @@ public class MainView extends JFrame implements IView, ActionListener{
 	private static final String SELECT_COMPUTER_MESSAGE = "Select computer type:";
 	private static final String SELECT_USB_DRIVE_MESSAGE = "Select USB drive:";
 	private static final String APPLICATION_NAME = "USB Disk Creator";
-	private static final int WINDOW_HEIGHT = 600;
-	private static final int WINDOW_WIDTH = 500;
-	private IMainController controller;
+	private static final int WINDOW_HEIGHT = 700;
+	private static final int WINDOW_WIDTH = 550;
+	private MainController controller;
 	private CheckboxGroup computerTypes = new CheckboxGroup();
 	private CheckboxGroup softwareTypes = new CheckboxGroup();
 	private Checkbox FTW100_Box = new Checkbox(FTSW100_BOX,softwareTypes,false);
@@ -89,7 +89,7 @@ public class MainView extends JFrame implements IView, ActionListener{
 	 * This JFrame must be given a controller to communicate with other classes.
 	 * @param controller
 	 */
-	public MainView(IMainController controller) {
+	public MainView(MainController controller) {
 		super(APPLICATION_NAME); // sets application name.
 		
 		this.controller = controller;
@@ -103,9 +103,8 @@ public class MainView extends JFrame implements IView, ActionListener{
 	 */
 	private void initialize() {
 		this.setSize(WINDOW_WIDTH,WINDOW_HEIGHT);
-		this.setLayout(new GridLayout(3,1,0,0)); // 3 rows 1 column
-		this.setResizable(false);
-		
+		this.setLayout(new GridLayout(2,1,0,0)); // 3 rows 1 column
+
 		//exits app on close window action
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 	}
@@ -118,16 +117,15 @@ public class MainView extends JFrame implements IView, ActionListener{
 		this.setUsbDrives();
 		this.setUpSelectionPanel();
 		this.setUpCustomerInformationPanel();
-		this.setUpButtonPanel();
 	}
 
 	/**
-	 * Adds a panel with action buttons to the JFrame (Create, Settings, Cancel)
+	 * Adds a panel with action buttons to the customerInformationPanel (Create, Settings, Cancel)
 	 */
-	private void setUpButtonPanel() {
+	private void setUpButtonPanel(JPanel customerInformationPanel) {
 		JPanel buttonPanel = new JPanel();
-		buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER,70,70));
-		this.add(buttonPanel);
+		buttonPanel.setLayout(new GridLayout(1,3,10,0));
+		customerInformationPanel.add(buttonPanel);
 		
 		//Add this class as an actionListener to the buttons and sets action command.
 		this.settingsButton.addActionListener(this);
@@ -147,14 +145,24 @@ public class MainView extends JFrame implements IView, ActionListener{
 	 */
 	private void setUpSelectionPanel() {
 		JPanel selectionPanel = new JPanel();
+		//creates gap of 10 pixels between JFrame border and this selectionPanel
+		selectionPanel.setBorder(BorderFactory.createCompoundBorder(
+		    BorderFactory.createEmptyBorder(10, 10, 10, 10), // outer border
+		    BorderFactory.createLoweredBevelBorder()));      // inner border
+		
 		selectionPanel.setLayout(new GridLayout(2,2,0,0)); //2 rows 2 columns
 		this.add(selectionPanel);
 		
 		JLabel selectUsbMessage = new JLabel(SELECT_USB_DRIVE_MESSAGE);
 		selectUsbMessage.setFont(new Font("Serif", Font.BOLD, 16));
+		
 		selectionPanel.add(selectUsbMessage);
-	
 		selectionPanel.add(this.usbDropDownList);
+		
+		//Creates gap between Panel border and usbDropDownList
+		this.usbDropDownList.setBorder(BorderFactory.createCompoundBorder(
+		    BorderFactory.createEmptyBorder(55, 11, 55, 11), // outer border
+		    BorderFactory.createLoweredBevelBorder()));// inner border
 		
 		this.setUpComputerTypePanel(selectionPanel);
 		this.setUpSoftwarePanel(selectionPanel);
@@ -186,7 +194,11 @@ public class MainView extends JFrame implements IView, ActionListener{
 	 */
 	private void setUpCustomerInformationPanel() {
 		JPanel customerInformationPanel = new JPanel();
-		customerInformationPanel.setLayout(new GridLayout(9,1,0,0));
+		//creates gap of 10 pixels between JFrame border and this selectionPanel
+		customerInformationPanel.setBorder(BorderFactory.createCompoundBorder(
+		    BorderFactory.createEmptyBorder(10, 10, 10, 10), // outer border
+		    BorderFactory.createLoweredBevelBorder()));      // inner border
+		customerInformationPanel.setLayout(new GridLayout(10,1,0,5));
 		this.add(customerInformationPanel);
 		
 		JLabel customerInformationTitle = new JLabel(CUSTOMER_INFORMATION_TITLE, SwingConstants.CENTER);
@@ -216,6 +228,7 @@ public class MainView extends JFrame implements IView, ActionListener{
 		customerInformationPanel.add(descriptionLabel);
 		
 		customerInformationPanel.add(this.descriptionInput);
+		this.setUpButtonPanel(customerInformationPanel);
 	}
 
 	/**
@@ -257,14 +270,18 @@ public class MainView extends JFrame implements IView, ActionListener{
 		computerTypePanel.add(this.panasonicBox);
 	}
 
-	/**
-	 * Handles the button actions
-	 */
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		switch(e.getActionCommand()) {
 		case SETTINGS_ACTION_COMMAND:
-			this.controller.goToSettings();
+			JPasswordField passwordInput = new JPasswordField();
+			int result = JOptionPane.showConfirmDialog(this, passwordInput, "Enter Password", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+			String password  = new String(passwordInput.getPassword());
+			if(result==JOptionPane.OK_OPTION) {
+				if(password.equals(Constants.SETTINGS_PASSWORD)) {
+					this.controller.goToSettings();
+				}
+			}
 			break;
 		case CREATE_ACTION_COMMAND:
 			this.validateUserInputs();
@@ -278,46 +295,51 @@ public class MainView extends JFrame implements IView, ActionListener{
 	 *  This method validates that the user inputs are respecting the constraints.
 	 */
 	private void validateUserInputs() {
-		
-		//Prevents FTSWAERI to be selected without laptop type and notifies user.
-		if(!this.laptopBox.getState()&& this.FTSWAERI_Box.getState()) {
-			this.alertUser(FTSWAERI_SELECTED_WITH_OTHER_THAN_LAPTOP);
-		}
-		//Prevents Industrial computer type to be selected without FTSW100 and notifies user.
-		else if(this.industrialComputorBox.getState() && !this.FTW100_Box.getState()) {
-			this.alertUser(FNO_FTSW100_SELECTED_WITH_INDUSTRIAL_COMPUTER_MESSAGE);
-		}
-		//Prevents Rack-PC type to be selected without FTSW100 and notifies user.
-		else if(this.rackPCBox.getState() && !this.FTW100_Box.getState()) {
-			this.alertUser(NO_FTSW100_SELECTED_WITH_RACK_PC_MESSAGE);
-		}
-		//Prevents creation if no USB drive is selected.
-		else if(this.usbDropDownList.getSelectedItem()==null) {
-			this.alertUser(NO_USB_SELECTED_MESSAGE);
-		}
-		else if(this.desktopBox.getState()){
-			this.createDesktopImage();
-		}
-		else if(this.laptopBox.getState()) {
-			this.createLaptopImage();
-		}
-		else if(this.industrialComputorBox.getState()) {
-			this.createIndustrialComputerImage();
-		}
-		else if(this.rackPCBox.getState()) {
-			this.createRackPCImage();
-		}
-		else if(this.panasonicBox.getState()) {
-			this.createPanasonicImage();
-		}
-		//Prevents creation if no computer type is selected and notifies user.
-		else{
-			this.alertUser(NO_COMPUTER_SELECTED_MESSAGE);
+		int result =JOptionPane.showConfirmDialog(this,
+			    "Are you sure you want to proceed?",
+			    "WARNING",
+			    JOptionPane.YES_NO_OPTION);
+		if(result==0) {
+			//Prevents FTSWAERI to be selected without laptop type and notifies user.
+			if(!this.laptopBox.getState()&& this.FTSWAERI_Box.getState()) {
+				this.alertUser(FTSWAERI_SELECTED_WITH_OTHER_THAN_LAPTOP);
+			}
+			//Prevents Industrial computer type to be selected without FTSW100 and notifies user.
+			else if(this.industrialComputorBox.getState() && !this.FTW100_Box.getState()) {
+				this.alertUser(FNO_FTSW100_SELECTED_WITH_INDUSTRIAL_COMPUTER_MESSAGE);
+			}
+			//Prevents Rack-PC type to be selected without FTSW100 and notifies user.
+			else if(this.rackPCBox.getState() && !this.FTW100_Box.getState()) {
+				this.alertUser(NO_FTSW100_SELECTED_WITH_RACK_PC_MESSAGE);
+			}
+			//Prevents creation if no USB drive is selected.
+			else if(this.usbDropDownList.getSelectedItem()==null) {
+				this.alertUser(NO_USB_SELECTED_MESSAGE);
+			}
+			else if(this.desktopBox.getState()){
+				this.createDesktopImage();
+			}
+			else if(this.laptopBox.getState()) {
+				this.createLaptopImage();
+			}
+			else if(this.industrialComputorBox.getState()) {
+				this.createIndustrialComputerImage();
+			}
+			else if(this.rackPCBox.getState()) {
+				this.createRackPCImage();
+			}
+			else if(this.panasonicBox.getState()) {
+				this.createPanasonicImage();
+			}
+			//Prevents creation if no computer type is selected and notifies user.
+			else{
+				this.alertUser(NO_COMPUTER_SELECTED_MESSAGE);
+			}
 		}
 	}
 	
 	/**
-	 * This will disable buttons.
+	 * This disables buttons in this JFrame.
 	 */
 	public void disableButtons() {
 		this.createButton.setEnabled(false);
@@ -330,7 +352,7 @@ public class MainView extends JFrame implements IView, ActionListener{
 	 */
 	private void createPanasonicImage() {
 		Image image = new Image(
-				ImageConstants.PANASONIC,
+				Constants.PANASONIC,
 				this.getSoftwareFolderNames(),
 				this.workOrderInput.getText(),
 				this.salesOrderInput.getText(),
@@ -345,7 +367,7 @@ public class MainView extends JFrame implements IView, ActionListener{
 	 */
 	private void createRackPCImage() {
 		Image image = new Image(
-				ImageConstants.RACK_PC,
+				Constants.RACK_PC,
 				this.getSoftwareFolderNames(),
 				this.workOrderInput.getText(),
 				this.salesOrderInput.getText(),
@@ -360,7 +382,7 @@ public class MainView extends JFrame implements IView, ActionListener{
 	 */
 	private void createIndustrialComputerImage() {
 		Image image = new Image(
-				ImageConstants.INDUSTRIAL_COMPUTER,
+				Constants.INDUSTRIAL_COMPUTER,
 				this.getSoftwareFolderNames(),
 				this.workOrderInput.getText(),
 				this.salesOrderInput.getText(),
@@ -376,13 +398,13 @@ public class MainView extends JFrame implements IView, ActionListener{
 	private void createLaptopImage() {
 		String TIBPath = null;
 		if(this.FTSWAERI_Box.getState()) {
-			TIBPath = ImageConstants.LAPTOP_FOR_AERI;
+			TIBPath = Constants.LAPTOP_FOR_AERI;
 		}
 		else if(this.FTW100_Box.getState()){
-			TIBPath = ImageConstants.LAPTOP_WITH_FTSW100;
+			TIBPath = Constants.LAPTOP_WITH_FTSW100;
 		}
 		else {
-			TIBPath = ImageConstants.LAPTOP_WITHOUT_FTSW100;
+			TIBPath = Constants.LAPTOP_WITHOUT_FTSW100;
 		}
 		Image image = new Image(
 				TIBPath,
@@ -401,10 +423,10 @@ public class MainView extends JFrame implements IView, ActionListener{
 	private void createDesktopImage() {
 		String TIBPath = null;
 		if(this.FTW100_Box.getState()){
-			TIBPath = ImageConstants.DESKTOP_WITH_FTSW100;
+			TIBPath = Constants.DESKTOP_WITH_FTSW100;
 		}
 		else {
-			TIBPath = ImageConstants.DESKTOP_WITHOUT_FTSW100;
+			TIBPath = Constants.DESKTOP_WITHOUT_FTSW100;
 		}
 		Image image = new Image(
 				TIBPath,
@@ -423,21 +445,20 @@ public class MainView extends JFrame implements IView, ActionListener{
 	private ArrayList<String> getSoftwareFolderNames() {
 		ArrayList<String> softwarePaths = new ArrayList<String>();
 		if(this.FTSWAERI_Box.getState()) {
-			softwarePaths.add(ImageConstants.FTSWAERI);
+			softwarePaths.add(Constants.FTSWAERI);
 		}
 		if(this.FTW100_Box.getState()) {
-			softwarePaths.add(ImageConstants.FTSW100);
+			softwarePaths.add(Constants.FTSW100);
 		}
 		if(this.HoMB_Box.getState()) {
-			softwarePaths.add(ImageConstants.HOMB);
+			softwarePaths.add(Constants.HOMB);
 		}
 		if(this.HoQA_Box.getState()) {
-			softwarePaths.add(ImageConstants.HOQA);
+			softwarePaths.add(Constants.HOQA);
 		}
 		return softwarePaths;
 	}
 
-	@Override
 	public void display() {
 		this.setVisible(true);
 	}

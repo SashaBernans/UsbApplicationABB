@@ -6,7 +6,11 @@ import java.beans.PropertyChangeListener;
 import app.model.ImageCopier;
 import app.view.CopyFilesView;
 
-public class CopyFilesController implements ICopyFilesController, PropertyChangeListener{
+/**
+ * @author Sasha Bernans
+ *This class communicates with the copyFilesView and the imageCopier
+ */
+public class CopyFilesController implements PropertyChangeListener{
 	private ImageCopier copier;
 	private CopyFilesView copyFilesView;
 
