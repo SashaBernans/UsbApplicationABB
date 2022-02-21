@@ -36,6 +36,8 @@ public class ImageCopier extends SwingWorker{
 	private Image image;
 	private String destination;
 	private String defaultPath;
+	private String TIBPath;
+	private ArrayList<String> directoriesToCopy;
 	
 	/**
 	 * @param image : contains the files paths and the information needed to create the image on the USB drive
@@ -45,6 +47,7 @@ public class ImageCopier extends SwingWorker{
 		if(!this.netDriveIsMapped()) {
 			this.mapNetDrive();
 		}
+		this.directoriesToCopy = new ArrayList<String>();
 		this.setImage(image);
 		this.setDestination(destination);
 		this.defaultPath = image.getDefaultPath();
@@ -59,10 +62,11 @@ public class ImageCopier extends SwingWorker{
 		this.formatUsbDrive();
 		
 		//Finds the directories to copy.
-		ArrayList<String> directoriesToCopy = new ArrayList<String>();
-		getImage().getSoftwareFolderNames().forEach(folder ->{
-			directoriesToCopy.addAll(this.findDirectoriesStartingWith(folder, this.defaultPath));
-		});
+		try {
+			Files.walkFileTree(Paths.get(this.defaultPath),new SoftwareFolderVisitor(this));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}	
 		
 		//Checks if there are two directories that start with the same part number
 		this.checkForDuplicates(directoriesToCopy);
@@ -70,8 +74,11 @@ public class ImageCopier extends SwingWorker{
 		System.out.println(directoriesToCopy);
 		
 		//Finds the .tib file to copy.
-		String TIBPath = findPathOfFileStartingWith(getImage().getTIBName(), this.defaultPath);
-		
+		try {
+			Files.walkFileTree(Paths.get(this.defaultPath),new TIBFileVisitor(this));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}	
 		System.out.println(TIBPath);
 		
 		//Writes the information that the user input in the mainView to a .txt file
@@ -179,67 +186,6 @@ public class ImageCopier extends SwingWorker{
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-	}
-
-	/**
-	 * This method searches a directory to find a file starting with a String.
-	 * If the file is contained in a sub-directory that sub-directory must start with the same string as well, or
-	 * null will be returned. If the file is more than 1 sub-directory deep then null will be returned.
-	 * @param startingPartOfFile : a string that represents the starting part of the file name.
-	 * @param directoryContainingFile : the directory to be searched
-	 * @return the path of the file as a String
-	 */
-	private String findPathOfFileStartingWith(String startingPartOfFile, String directoryContainingFile) {
-		ArrayList<String> files = new ArrayList<String>();
-		
-		//Find the directory that contains the file
-		ArrayList<String> dirPaths = findDirectoriesStartingWith(startingPartOfFile,this.defaultPath);
-		
-		String dirPath;
-		
-		//if directory not found then use default path
-		if(dirPaths.isEmpty()) {
-			dirPath = this.defaultPath;
-		}
-		else {
-			dirPath = dirPaths.get(0);
-		}
-		
-		//Stream the paths contained in the directory to find the file starting with the startingPartOfFile String.
-		walkReadable(Paths.get(dirPath))
-			.forEach(file ->{
-				if(file.getFileName().toString().startsWith(startingPartOfFile)) {
-					files.add(file.toString());
-				}
-			});
-		if(files.isEmpty()) {
-			return null;
-		}
-		
-		return files.get(0);
-	}
-
-	/**
-	 * This method finds a ArrayList of directories that their names start with the desired string.
-	 * It does not search sub-directories. If the source directory does not contain any directories starting
-	 * with the specified string then an empty array is returned.
-	 * @param startingPartOfDirectory : a string that represents the starting part of the directory name.
-	 * @param sourceDirectoryLocation : the directory path containing the directories to searched for
-	 * @return a ArrayList of the directories starting with the specified string.
-	 */
-	private ArrayList<String> findDirectoriesStartingWith(String startingPartOfDirectory, String sourceDirectoryLocation) {
-		ArrayList<String> files = new ArrayList<String>();
-		//Gets stream of sub-directories if sourceDirectoryLocation is readable
-			walkReadable(Paths.get(sourceDirectoryLocation))
-			//For each sub-directory add it to files if it starts with startingPartOfDirectory
-				.forEach(file -> {
-					if(Files.isDirectory(file)) {
-						if(file.getFileName().toString().startsWith(startingPartOfDirectory)) {
-							files.add(file.toString());
-						}
-					}
-				});
-		return files;
 	}
 	
 	/**
@@ -409,5 +355,15 @@ public class ImageCopier extends SwingWorker{
 	protected Object doInBackground() throws Exception {
 		this.copyImageToUsb();
 		return null;
+	}
+
+
+	public void setTIBPath(String path) {
+		this.TIBPath = path;
+	}
+
+
+	public void addDirectoryToCopy(String dir) {
+		this.directoriesToCopy.add(dir);
 	}
 }
