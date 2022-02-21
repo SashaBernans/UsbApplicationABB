@@ -12,7 +12,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Stream;
 
 import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
@@ -26,13 +25,10 @@ import javax.swing.filechooser.FileSystemView;
  *if the structure changes this code may need to be modified.
  */
 public class ImageCopier extends SwingWorker{
-	private static final int SPANNED_ARCHIVE_BIT_SIGNATURE = 0x504B0708;
-	private static final int EMPTY_ARCHIVE_BIT_SIGNATURE = 0x504B0506;
-	private static final int ARCHIVE_BIT_SIGNATURE = 0x504B0304;
 	private static final String STANDARD_OUTPUT_MESSAGE = "Standard Output:";
 	private static final String DONE_MESSAGE = "Done";
 	private static final String STANDARD_ERROR_MESSAGE = "Standard Error:";
-	private static final String DUPLICATE_SOFTWARE_MESSAGE = "Duplicate software directories have been found, copy all? \n";
+	private static final String DUPLICATE_SOFTWARE_MESSAGE = "Duplicate software directories have been found, copy all? \n If no is selected only the first directory will be copied.\n";
 	private Image image;
 	private String destination;
 	private String defaultPath;
@@ -59,8 +55,10 @@ public class ImageCopier extends SwingWorker{
 	 */
 	public void copyImageToUsb()  {
 		//Formats USB drive but it is commented because this version is for already formatted drives.
-		this.formatUsbDrive();
+		//this.formatUsbDrive();
 		
+		Path t = Paths.get("C:\\Users\\CASABER\\t.zip");
+		System.out.println(t.toFile().getName().toString());
 		//Finds the directories to copy.
 		try {
 			Files.walkFileTree(Paths.get(this.defaultPath),new SoftwareFolderVisitor(this));
@@ -119,7 +117,7 @@ public class ImageCopier extends SwingWorker{
 
 
 	/**
-	 * This ask the user if they want to copy all duplicate directories or not.
+	 * This ask the user if they want to copy all duplicate directories or only the first.
 	 * @param duplicates : the list of duplicate directories
 	 * @return true if yes, false if no
 	 */
@@ -187,27 +185,6 @@ public class ImageCopier extends SwingWorker{
 			e.printStackTrace();
 		}
 	}
-	
-	/**
-	 * Returns a Stream of the paths contained in the directory at 1 level deep. 
-	 * If the directory isn't readable or the path is for a file, a stream containing only the directory path is returned.
-	 * @param p : path to directory
-	 * @return a stream of of the directory content
-	 */
-	private Stream<Path> walkReadable(Path p) {
-		if(Files.isReadable(p)) {
-			if(Files.isDirectory(p)) {
-				try {
-					return Files.list(p);
-					
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-			return Stream.of(p);
-		}
-		return Stream.of(p);
-    }
 
 	/**
 	 * This copies a directory, its sub-directories and its files to a destination 
@@ -237,10 +214,10 @@ public class ImageCopier extends SwingWorker{
      */
     private static void copySourceToDest(Path source,Path toPath,Path fromPath) {
     	Boolean canBeCopied = true;
-    	String subfolder = "";
+    	String subFolder = "";
     	
     	if(!source.equals(fromPath)) {
-    		subfolder = source.toString().substring(fromPath.toString().length()+1);
+    		subFolder = source.toString().substring(fromPath.toString().length()+1);
         }
     	
     	//this gets destination for the file being copied
@@ -249,7 +226,7 @@ public class ImageCopier extends SwingWorker{
         //This extracts the part number of the source directory
         String partNumber = fromPath.getFileName().toString().substring(0, 11);
         //This checks if the file can be copied 
-    	if(subfolder.startsWith(partNumber)) {
+    	if(subFolder.startsWith(partNumber) && subFolder.endsWith(".zip")) {
         	canBeCopied = false;
     	}
         try {
@@ -260,26 +237,6 @@ public class ImageCopier extends SwingWorker{
             e.printStackTrace();
         }
     }
-    
-    /**
-     * NOTE: this method cannot be used at the moment because it requires some permissions the user
-     * won't have on the file.
-     * 
-     * 
-     * this checks if a file is a zip by checking its bits signature
-     * @param f : the file to check
-     * @return true if the file is a zip archive false if not.
-     */
-    private static boolean isArchive(File f) {
-        int fileSignature = 0;
-        try (RandomAccessFile raf = new RandomAccessFile(f, "r")) {
-            fileSignature = raf.readInt();
-        } catch (IOException e) {
-           e.printStackTrace();
-        }
-        return fileSignature == ARCHIVE_BIT_SIGNATURE || fileSignature == EMPTY_ARCHIVE_BIT_SIGNATURE || fileSignature == SPANNED_ARCHIVE_BIT_SIGNATURE;
-    }
-    
     
     /**
      * 
