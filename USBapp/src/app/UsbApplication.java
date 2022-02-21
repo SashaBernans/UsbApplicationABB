@@ -1,5 +1,6 @@
 package app;
 
+
 import javax.swing.JOptionPane;
 
 import app.config.ConfigManager;
@@ -21,4 +22,5 @@ public class UsbApplication {
 			MainController appController = new MainController();
 			appController.startApplication();
 		}
+		
 }

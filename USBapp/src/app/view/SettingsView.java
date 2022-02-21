@@ -17,6 +17,11 @@ import javax.swing.JTextField;
 import app.config.ConfigManager;
 import app.controller.SettingsController;
 
+/**
+ * This JFrame shows the default path to the user and the user can change it.
+ * @author CASABER
+ *
+ */
 public class SettingsView extends JFrame implements ActionListener{
 
 	private static final String CURRENT_DEFAULT_PATH_LABEL = "Current default path : ";

@@ -16,19 +16,22 @@ public class Image {
 	private String salesOrder;
 	private String customerName;
 	private String description;
+	private String defaultPath;
 	
 	public Image(String TIBName,
 			ArrayList<String> softwareFolderNames,
 			String workOrder,
 			String salesOrder,
 			String customerName,
-			String description){
-		this.setSoftwareFolderNames(softwareFolderNames);
-		this.setTIBName(TIBName);
-		this.setWorkOrder(workOrder);
-		this.setSalesOrder(salesOrder);
-		this.setCustomerName(customerName);
-		this.setDescription(description);
+			String description,
+			String defaultPath){
+		this.softwareFolderNames = softwareFolderNames;
+		this.TIBName = TIBName;
+		this.workOrder = workOrder;
+		this.salesOrder = salesOrder;
+		this.customerName = customerName;
+		this.description = description;
+		this.defaultPath = defaultPath;
 	}
 
 	public String getTIBName() {
@@ -77,5 +80,13 @@ public class Image {
 
 	public void setDescription(String description) {
 		this.description = description;
+	}
+
+	public String getDefaultPath() {
+		return defaultPath;
+	}
+
+	public void setDefaultPath(String defaultPath) {
+		this.defaultPath = defaultPath;
 	}
 }

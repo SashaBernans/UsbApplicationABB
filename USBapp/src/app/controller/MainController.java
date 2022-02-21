@@ -59,6 +59,7 @@ public class MainController {
 	 */
 	private boolean customerInformationIsValid(Image image) {
 		String error = null;
+		String first7Chars = image.getWorkOrder().substring(0,6);
 		boolean isValid = true;
 		//verify sales order character number
 		if(image.getSalesOrder().length()!=SALES_ORDER_REQUIRED_LENGTH) {
@@ -70,8 +71,8 @@ public class MainController {
 			error = "Work order must be at least 7 characters long";
 			isValid = false;
 		}
-		//verify work order is only numbers
-		if(!image.getWorkOrder().matches("\\d+")) {
+		//verify work order first 7 chars are only numbers
+		if(!first7Chars.matches("\\d+")) {
 			error = "Work order can only be numbers or -";
 			isValid = false;
 		}

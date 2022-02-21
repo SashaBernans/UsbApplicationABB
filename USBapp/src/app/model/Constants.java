@@ -22,4 +22,13 @@ public final class Constants {
 	public static final String PANASONIC = ConfigManager.getString("PANASONIC");
 	public static final String DEFAULT_DEFAULT_PATH = "L:\\Installs\\SOFT\\SOFTINV\\AAYYYYYY-ZZ";
 	public static final String SETTINGS_PASSWORD = "ABBb0m3m";
+	
+	public static final String DESKTOP_WITH_FTSW100_DEFAULT_PATH = ConfigManager.getString("DESKTOP_WITH_FTSW100_DEFAULT_PATH");
+	public static final String DESKTOP_WITHOUT_FTSW100_DEFAULT_PATH = ConfigManager.getString("DESKTOP_WITHOUT_FTSW100_DEFAULT_PATH");
+	public static final String LAPTOP_WITH_FTSW100_DEFAULT_PATH =ConfigManager.getString("LAPTOP_WITH_FTSW100_DEFAULT_PATH");
+	public static final String LAPTOP_WITHOUT_FTSW100_DEFAULT_PATH =ConfigManager.getString("LAPTOP_WITHOUT_FTSW100_DEFAULT_PATH");
+	public static final String LAPTOP_FOR_AERI_DEFAULT_PATH = ConfigManager.getString("LAPTOP_FOR_AERI_DEFAULT_PATH");
+	public static final String INDUSTRIAL_COMPUTER_DEFAULT_PATH = ConfigManager.getString("INDUSTRIAL_COMPUTER_DEFAULT_PATH");
+	public static final String RACK_PC_DEFAULT_PATH =ConfigManager.getString("RACK_PC_DEFAULT_PATH");
+	public static final String PANASONIC_DEFAULT_PATH =ConfigManager.getString("PANASONIC_DEFAULT_PATH");
 }

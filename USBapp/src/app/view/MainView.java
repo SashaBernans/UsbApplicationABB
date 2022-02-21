@@ -2,16 +2,18 @@ package app.view;
 
 import java.awt.Checkbox;
 import java.awt.CheckboxGroup;
-import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
@@ -33,6 +35,7 @@ import app.model.Constants;
  */
 public class MainView extends JFrame implements ActionListener{
 	
+	private static final String ICON_PATH = "usbIcon.png";
 	private static final String FTSWAERI_SELECTED_WITH_OTHER_THAN_LAPTOP = "FTSWAERI can only be selected with laptop computer type";
 	private static final String FNO_FTSW100_SELECTED_WITH_INDUSTRIAL_COMPUTER_MESSAGE = "FTSW100 must be selected with Industrial computer type";
 	private static final String NO_FTSW100_SELECTED_WITH_RACK_PC_MESSAGE = "FTSW100 must be selected with Rack-PC type";
@@ -83,7 +86,9 @@ public class MainView extends JFrame implements ActionListener{
 	private JButton settingsButton = new JButton(SETTINGS_BUTTON_TEXT);
 	private JButton createButton = new JButton(CREATE_BUTTON_TEXT);
 	private JButton cancelButton = new JButton(CANCEL_BUTTON_TEXT);
-	private JComboBox<File> usbDropDownList = new JComboBox<File>();
+	private JComboBox<String> usbDropDownList = new JComboBox<String>();
+	private HashMap<String, String> usbDrives = new HashMap<String, String>();
+	private String selectedDrive;
 
 	/**
 	 * This JFrame must be given a controller to communicate with other classes.
@@ -104,7 +109,9 @@ public class MainView extends JFrame implements ActionListener{
 	private void initialize() {
 		this.setSize(WINDOW_WIDTH,WINDOW_HEIGHT);
 		this.setLayout(new GridLayout(2,1,0,0)); // 3 rows 1 column
-
+		this.setResizable(false);
+		ImageIcon icon = new ImageIcon(getClass().getResource(ICON_PATH));
+		this.setIconImage(icon.getImage());
 		//exits app on close window action
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 	}
@@ -174,6 +181,7 @@ public class MainView extends JFrame implements ActionListener{
 	private void setUsbDrives() {
 		File[] paths;
 		String driveType;
+		Boolean isFAT32 = false;
 		// Gets all drives
 		paths = File.listRoots();
 		
@@ -183,8 +191,10 @@ public class MainView extends JFrame implements ActionListener{
 		{
 		    // add file to comboBox if file is usb Drive
 			driveType = fsv.getSystemTypeDescription(path);
-			if(driveType.equals("USB Drive")) {
-				this.usbDropDownList.addItem(path);
+			isFAT32 = fsv.getSystemDisplayName(path).contains("UEFI_NTFS");
+			if(driveType.equals("USB Drive") && !isFAT32) {
+				this.usbDropDownList.addItem(fsv.getSystemDisplayName(path));
+				this.usbDrives.put(fsv.getSystemDisplayName(path), path.toString());
 			}
 		}
 	}
@@ -284,6 +294,7 @@ public class MainView extends JFrame implements ActionListener{
 			}
 			break;
 		case CREATE_ACTION_COMMAND:
+			this.selectedDrive = this.usbDrives.get(this.usbDropDownList.getSelectedItem());
 			this.validateUserInputs();
 			break;
 		case CANCEL_ACTION_COMMAND:
@@ -357,9 +368,10 @@ public class MainView extends JFrame implements ActionListener{
 				this.workOrderInput.getText(),
 				this.salesOrderInput.getText(),
 				this.customerNameInput.getText(),
-				this.descriptionInput.getText()
+				this.descriptionInput.getText(),
+				Constants.PANASONIC_DEFAULT_PATH
 				);
-		controller.goToCopyFilesView(image, usbDropDownList.getSelectedItem().toString());
+		controller.goToCopyFilesView(image, this.selectedDrive);
 	}
 
 	/**
@@ -372,9 +384,10 @@ public class MainView extends JFrame implements ActionListener{
 				this.workOrderInput.getText(),
 				this.salesOrderInput.getText(),
 				this.customerNameInput.getText(),
-				this.descriptionInput.getText()
+				this.descriptionInput.getText(),
+				Constants.RACK_PC_DEFAULT_PATH
 				);
-		controller.goToCopyFilesView(image, usbDropDownList.getSelectedItem().toString());
+		controller.goToCopyFilesView(image, this.selectedDrive);
 	}
 
 	/**
@@ -387,9 +400,10 @@ public class MainView extends JFrame implements ActionListener{
 				this.workOrderInput.getText(),
 				this.salesOrderInput.getText(),
 				this.customerNameInput.getText(),
-				this.descriptionInput.getText()
+				this.descriptionInput.getText(),
+				Constants.INDUSTRIAL_COMPUTER_DEFAULT_PATH
 				);
-		controller.goToCopyFilesView(image, usbDropDownList.getSelectedItem().toString());
+		controller.goToCopyFilesView(image, this.selectedDrive);
 	}
 
 	/**
@@ -397,14 +411,18 @@ public class MainView extends JFrame implements ActionListener{
 	 */
 	private void createLaptopImage() {
 		String TIBPath = null;
+		String defaultPath;
 		if(this.FTSWAERI_Box.getState()) {
 			TIBPath = Constants.LAPTOP_FOR_AERI;
+			defaultPath = Constants.LAPTOP_FOR_AERI_DEFAULT_PATH;
 		}
 		else if(this.FTW100_Box.getState()){
 			TIBPath = Constants.LAPTOP_WITH_FTSW100;
+			defaultPath = Constants.LAPTOP_WITH_FTSW100_DEFAULT_PATH;
 		}
 		else {
 			TIBPath = Constants.LAPTOP_WITHOUT_FTSW100;
+			defaultPath = Constants.LAPTOP_WITHOUT_FTSW100_DEFAULT_PATH;
 		}
 		Image image = new Image(
 				TIBPath,
@@ -412,9 +430,10 @@ public class MainView extends JFrame implements ActionListener{
 				this.workOrderInput.getText(),
 				this.salesOrderInput.getText(),
 				this.customerNameInput.getText(),
-				this.descriptionInput.getText()
+				this.descriptionInput.getText(),
+				defaultPath
 				);
-		controller.goToCopyFilesView(image, usbDropDownList.getSelectedItem().toString());
+		controller.goToCopyFilesView(image, this.selectedDrive);
 	}
 
 	/**
@@ -422,11 +441,14 @@ public class MainView extends JFrame implements ActionListener{
 	 */
 	private void createDesktopImage() {
 		String TIBPath = null;
+		String defaultPath;
 		if(this.FTW100_Box.getState()){
 			TIBPath = Constants.DESKTOP_WITH_FTSW100;
+			defaultPath = Constants.DESKTOP_WITH_FTSW100_DEFAULT_PATH;
 		}
 		else {
 			TIBPath = Constants.DESKTOP_WITHOUT_FTSW100;
+			defaultPath = Constants.DESKTOP_WITHOUT_FTSW100_DEFAULT_PATH;
 		}
 		Image image = new Image(
 				TIBPath,
@@ -434,9 +456,10 @@ public class MainView extends JFrame implements ActionListener{
 				this.workOrderInput.getText(),
 				this.salesOrderInput.getText(),
 				this.customerNameInput.getText(),
-				this.descriptionInput.getText()
+				this.descriptionInput.getText(),
+				defaultPath
 				);
-		controller.goToCopyFilesView(image, usbDropDownList.getSelectedItem().toString());
+		controller.goToCopyFilesView(image, this.selectedDrive);
 	}
 	
 	/**

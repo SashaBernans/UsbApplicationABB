@@ -4,6 +4,11 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+/**
+ * This class can be used to format the usbDrive if needed before copying files to it.
+ * @author CASABER
+ *
+ */
 public class UsbFormatter{
 	private String drive;
 	private String workOrder;

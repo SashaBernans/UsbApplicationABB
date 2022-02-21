@@ -60,7 +60,7 @@ public class ConfigManager {
 			//Overwrites the config file with a new empty one
 			FileOutputStream out = new FileOutputStream(CONFIG_FILE_NAME);
 			
-			//Writes all properties from the prop oject to the new file
+			//Writes all properties from the prop object to the new file
 			prop.store(out, null);
 			out.close();
 			

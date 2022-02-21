@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -13,10 +14,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 
+import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 import javax.swing.filechooser.FileSystemView;
-
-import app.config.ConfigManager;
 
 /**
  *@author Sasha Bernans
@@ -26,6 +26,13 @@ import app.config.ConfigManager;
  *if the structure changes this code may need to be modified.
  */
 public class ImageCopier extends SwingWorker{
+	private static final int SPANNED_ARCHIVE_BIT_SIGNATURE = 0x504B0708;
+	private static final int EMPTY_ARCHIVE_BIT_SIGNATURE = 0x504B0506;
+	private static final int ARCHIVE_BIT_SIGNATURE = 0x504B0304;
+	private static final String STANDARD_OUTPUT_MESSAGE = "Standard Output:";
+	private static final String DONE_MESSAGE = "Done";
+	private static final String STANDARD_ERROR_MESSAGE = "Standard Error:";
+	private static final String DUPLICATE_SOFTWARE_MESSAGE = "Duplicate software directories have been found, copy all? \n";
 	private Image image;
 	private String destination;
 	private String defaultPath;
@@ -40,15 +47,7 @@ public class ImageCopier extends SwingWorker{
 		}
 		this.setImage(image);
 		this.setDestination(destination);
-		
-		//This gets the default path from the config.properties file using ConfigManager if it is set.
-		if(ConfigManager.getString("defaultPath")!="defaultPath") {
-			this.defaultPath=ConfigManager.getString("defaultPath");
-		}
-		else {
-			//Set the default default path as default if the config.properties file defaultPath property is not set.
-			this.defaultPath= Constants.DEFAULT_DEFAULT_PATH;
-		}
+		this.defaultPath = image.getDefaultPath();
 	}
 
 	
@@ -57,13 +56,17 @@ public class ImageCopier extends SwingWorker{
 	 */
 	public void copyImageToUsb()  {
 		//Formats USB drive but it is commented because this version is for already formatted drives.
-		//this.formatUsbDrive();
+		this.formatUsbDrive();
 		
 		//Finds the directories to copy.
 		ArrayList<String> directoriesToCopy = new ArrayList<String>();
 		getImage().getSoftwareFolderNames().forEach(folder ->{
 			directoriesToCopy.addAll(this.findDirectoriesStartingWith(folder, this.defaultPath));
 		});
+		
+		//Checks if there are two directories that start with the same part number
+		this.checkForDuplicates(directoriesToCopy);
+		
 		System.out.println(directoriesToCopy);
 		
 		//Finds the .tib file to copy.
@@ -82,6 +85,55 @@ public class ImageCopier extends SwingWorker{
 			this.copyDirectoryAndContentsToDestination(dir, getDestination());
 		});
 	}
+
+	
+	/**
+	 * This finds duplicate software directories and asks the user if they want to copy all of them or only the first one.
+	 * Then if the user confirm NO_OPTION the second one is removed from directories to copy.
+	 * @param directoriesToCopy : the list of directories to find duplicates in
+	 */
+	private void checkForDuplicates(ArrayList<String> directoriesToCopy) {
+		ArrayList<String> duplicates = new ArrayList<String>();
+		for(int i = 0; i<image.getSoftwareFolderNames().size();i++) {
+			for(int j = 0; j<directoriesToCopy.size();j++){
+				if(Paths.get(directoriesToCopy.get(j)).getFileName().toString().startsWith(image.getSoftwareFolderNames().get(i))) {
+					duplicates.add(directoriesToCopy.get(j));
+				}
+				if(duplicates.size()>1 && j==directoriesToCopy.size()-1) {
+					if(!this.askUserToCopyAll(duplicates)) {
+						for(int k=duplicates.size()-1;k>0;k--) {
+							directoriesToCopy.remove(k);
+						}
+					}
+				}
+			}
+		}
+	}
+
+
+	/**
+	 * This ask the user if they want to copy all duplicate directories or not.
+	 * @param duplicates : the list of duplicate directories
+	 * @return true if yes, false if no
+	 */
+	private Boolean askUserToCopyAll(ArrayList<String> duplicates) {
+		String lines = "";
+		for(int i = 0; i<duplicates.size();i++) {
+			lines = lines.concat(i+1+" : "+duplicates.get(i)+"\n");
+		}
+		String message = DUPLICATE_SOFTWARE_MESSAGE+lines;
+		int  userInput = JOptionPane.showConfirmDialog(null,
+				message, 
+				"Warning",
+				JOptionPane.YES_NO_OPTION);
+		if(userInput==JOptionPane.YES_OPTION) {
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+
 
 	/**
 	 * Creates and writes the information that user input in the mainView to a .txt file.
@@ -114,7 +166,8 @@ public class ImageCopier extends SwingWorker{
 	}
 
 	/**
-	 * This copies a file to a directory
+	 * This copies a file to a directory, throws filesAlreadyExist
+	 * if the file already exists in the destination directory.
 	 * @param destinationPath : path to destination directory
 	 * @param filePath : path of file to be copied
 	 */
@@ -212,7 +265,8 @@ public class ImageCopier extends SwingWorker{
 
 	/**
 	 * This copies a directory, its sub-directories and its files to a destination 
-	 * directory while preserving the original structure.
+	 * directory while preserving the original structure, but it does not copy the archive 
+	 * file that is named the same as the directory.
 	 * @param sourceDirectory : the directory to copy
 	 * @param destinationDirectory : the directory to copy to
 	 */
@@ -236,15 +290,48 @@ public class ImageCopier extends SwingWorker{
      * @param fromPath : the root directory of the source's directory structure
      */
     private static void copySourceToDest(Path source,Path toPath,Path fromPath) {
+    	Boolean canBeCopied = true;
+    	String subfolder = "";
+    	
+    	if(!source.equals(fromPath)) {
+    		subfolder = source.toString().substring(fromPath.toString().length()+1);
+        }
+    	
     	//this gets destination for the file being copied
         Path destination = Paths.get(toPath.toString()+"\\"+fromPath.getFileName().toString()
         		, source.toString().substring(fromPath.toString().length()));
+        //This extracts the part number of the source directory
+        String partNumber = fromPath.getFileName().toString().substring(0, 11);
+        //This checks if the file can be copied 
+    	if(subfolder.startsWith(partNumber)) {
+        	canBeCopied = false;
+    	}
         try {
-            Files.copy(source, destination);
-            
+        	if(canBeCopied) {
+        		Files.copy(source, destination);
+        	}
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+    
+    /**
+     * NOTE: this method cannot be used at the moment because it requires some permissions the user
+     * won't have on the file.
+     * 
+     * 
+     * this checks if a file is a zip by checking its bits signature
+     * @param f : the file to check
+     * @return true if the file is a zip archive false if not.
+     */
+    private static boolean isArchive(File f) {
+        int fileSignature = 0;
+        try (RandomAccessFile raf = new RandomAccessFile(f, "r")) {
+            fileSignature = raf.readInt();
+        } catch (IOException e) {
+           e.printStackTrace();
+        }
+        return fileSignature == ARCHIVE_BIT_SIGNATURE || fileSignature == EMPTY_ARCHIVE_BIT_SIGNATURE || fileSignature == SPANNED_ARCHIVE_BIT_SIGNATURE;
     }
     
     
@@ -262,7 +349,7 @@ public class ImageCopier extends SwingWorker{
 		// for each pathname in pathname array
 		for(File path:paths)
 		{
-			if(fsv.getSystemDisplayName(path)=="apps (\\\\caabbqubf1001) (L:)") {
+			if(fsv.getSystemDisplayName(path).equals("apps (\\\\caabbqubf1001) (L:)")) {
 				return true;
 			}
 		}
@@ -280,7 +367,7 @@ public class ImageCopier extends SwingWorker{
 			// printing the results
 			  process.getOutputStream().close();
 			  String line;
-			  System.out.println("Standard Output:");
+			  System.out.println(STANDARD_OUTPUT_MESSAGE);
 			  BufferedReader stdout = new BufferedReader(new InputStreamReader(
 			    process.getInputStream()));
 			  while ((line = stdout.readLine()) != null) {
@@ -289,14 +376,14 @@ public class ImageCopier extends SwingWorker{
 			  
 			//Print out errors
 			  stdout.close();
-			  System.out.println("Standard Error:");
+			  System.out.println(STANDARD_ERROR_MESSAGE);
 			  BufferedReader stderr = new BufferedReader(new InputStreamReader(
 			    process.getErrorStream()));
 			  while ((line = stderr.readLine()) != null) {
 			   System.out.println(line);
 			  }
 			  stderr.close();
-			  System.out.println("Done");
+			  System.out.println(DONE_MESSAGE);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
