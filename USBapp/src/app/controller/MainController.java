@@ -15,6 +15,7 @@ public class MainController {
 	private ImageCopier imageCopier;
 	private CopyFilesController copyFilesController;
 	private MainView mainView;
+	private SettingsController settings;
 	
 	public MainController() {
 	}
@@ -31,7 +32,7 @@ public class MainController {
 	 * Creates the settings controller that will then create the settings view
 	 */
 	public void goToSettings() {
-		SettingsController settings = new SettingsController();
+		this.settings = new SettingsController();
 	}
 
 	/**
@@ -41,13 +42,15 @@ public class MainController {
 	 */
 	public void goToCopyFilesView(Image image, String usbPath) {
 		//verify customer information before continuing
+		System.out.println(image.getTIBName());
+		System.out.println(image.getSoftwareFolderNames().toString());
 		if(this.customerInformationIsValid(image)) {
 			
 			//Disables buttons in mainMenu to avoid conflicts
 			this.mainView.disableButtons();
 			
 			this.imageCopier = new ImageCopier(image,usbPath);
-			this.copyFilesController = new CopyFilesController(this.imageCopier);
+			this.copyFilesController = new CopyFilesController(this.imageCopier,this);
 		}
 	}
 
@@ -59,26 +62,33 @@ public class MainController {
 	 */
 	private boolean customerInformationIsValid(Image image) {
 		String error = null;
-		String first7Chars = image.getWorkOrder().substring(0,6);
-		boolean isValid = true;
-		//verify sales order character number
-		if(image.getSalesOrder().length()!=SALES_ORDER_REQUIRED_LENGTH) {
-			error = "Sales order must be 6 characters long";
-			isValid = false;
-		}
 		//verify work order character number
 		if(image.getWorkOrder().length()<WORK_ORDER_MINIMUM_LENTGH) {
 			error = "Work order must be at least 7 characters long";
-			isValid = false;
+			this.mainView.alertUser(error);
+			return false;
+		}
+		
+		String first7Chars = image.getWorkOrder().substring(0,6);
+		
+		//verify sales order character number
+		if(image.getSalesOrder().length()!=SALES_ORDER_REQUIRED_LENGTH) {
+			error = "Sales order must be 6 characters long";
+			this.mainView.alertUser(error);
+			return false;
 		}
 		//verify work order first 7 chars are only numbers
 		if(!first7Chars.matches("\\d+")) {
 			error = "Work order can only be numbers or -";
-			isValid = false;
+			this.mainView.alertUser(error);
+			return false;
 		}
-		//Alerts user if error is not null
-		this.mainView.alertUser(error);
-		return isValid;
+		return true;
 	}
 
+	public void refreshMain() {
+		this.mainView.dispose();
+		this.mainView = new MainView(this);
+		mainView.display();
+	}
 }

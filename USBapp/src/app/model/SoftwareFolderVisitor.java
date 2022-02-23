@@ -18,6 +18,10 @@ public class SoftwareFolderVisitor extends SimpleFileVisitor<Path>{
 		this.imageCopier = imageCopier;
 	}
 	
+	/**
+	 *This checks if a the directory is readable before visiting it. If the dir is
+	 *not readable the fileVisitor will skip it and it's entire subtree.
+	 */
 	@Override
 	public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
 	   if (!Files.isReadable(dir)) {
@@ -26,6 +30,11 @@ public class SoftwareFolderVisitor extends SimpleFileVisitor<Path>{
 	   return CONTINUE;
 	}
 	
+	
+	/**
+	 *After visiting a directory this checks if it starts with one of the right part numbers.
+	 *If so, it is added to the imageCopier's director
+	 */
 	@Override
     public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
 		ArrayList<String> softwareNames = imageCopier.getImage().getSoftwareFolderNames();

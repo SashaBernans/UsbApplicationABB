@@ -8,7 +8,6 @@ import app.view.SettingsView;
  *This class communicates with the settings view and the ConfigManager class.
  */
 public class SettingsController {
-	private static final String DEFAULT_PATH_KEY = "defaultPath";
 	private SettingsView settingsView;
 
 	/**
@@ -24,6 +23,15 @@ public class SettingsController {
 	 * @param newDefaultPath
 	 */
 	public void saveSettings(String newDefaultPath) {
-		ConfigManager.setString(DEFAULT_PATH_KEY, newDefaultPath);
+		ConfigManager.setString("defaultPath", newDefaultPath);
+		ConfigManager.setString("RACK_PC_DEFAULT_PATH", newDefaultPath);
+		ConfigManager.setString("ATI_OEM_DEFAULT_PATH", newDefaultPath);
+		ConfigManager.setString("PANASONIC_DEFAULT_PATH", newDefaultPath);
+		ConfigManager.setString("DESKTOP_WITHOUT_FTSW100_DEFAULT_PATH", newDefaultPath);
+		ConfigManager.setString("LAPTOP_WITHOUT_FTSW100_DEFAULT_PATH", newDefaultPath);
+		ConfigManager.setString("DESKTOP_WITH_FTSW100_DEFAULT_PATH", newDefaultPath);
+		ConfigManager.setString("INDUSTRIAL_COMPUTER_DEFAULT_PATH", newDefaultPath);
+		ConfigManager.setString("LAPTOP_WITH_FTSW100_DEFAULT_PATH", newDefaultPath);
+		ConfigManager.setString("LAPTOP_FOR_AERI_DEFAULT_PATH", newDefaultPath);
 	}
 }

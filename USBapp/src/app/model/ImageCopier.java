@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -24,7 +23,14 @@ import javax.swing.filechooser.FileSystemView;
  *Copying an image at the moment is dependant on the directory and file structure of the default path : L:\\Installs\\SOFT\\SOFTINV\\AAYYYYYY-ZZ
  *if the structure changes this code may need to be modified.
  */
-public class ImageCopier extends SwingWorker{
+public class ImageCopier extends SwingWorker<Image,String>{
+	private static final String MAPPING_DRIVE_ERROR = "An error occured while mapping network drive : \n";
+	private static final String SOFTWARE_FOLDER_COPY_ERROR = "An error occured while copying the software folder : \n";
+	private static final String TIB_FILE_COPY_ERROR = "An error occured while copying the TIB file : \n";
+	private static final String TIB_ERROR = "An error occured while searching for the .tib file : \n";
+	private static final String TIB_NOT_FOUND = "The following .tib file was not found : \n";
+	private static final String SOFTWARE_NOT_FOUND = "The following software folders were not found : \n";
+	private static final String SOFTWARE_FOLDERS_ERROR = "an error occured while searching for software folders : \n ";
 	private static final String STANDARD_OUTPUT_MESSAGE = "Standard Output:";
 	private static final String DONE_MESSAGE = "Done";
 	private static final String STANDARD_ERROR_MESSAGE = "Standard Error:";
@@ -34,6 +40,7 @@ public class ImageCopier extends SwingWorker{
 	private String defaultPath;
 	private String TIBPath;
 	private ArrayList<String> directoriesToCopy;
+	private String ISOPath;
 	
 	/**
 	 * @param image : contains the files paths and the information needed to create the image on the USB drive
@@ -54,30 +61,58 @@ public class ImageCopier extends SwingWorker{
 	 * Formats and then Copies the directories and files necessary for creating the image on the USB drive.
 	 */
 	public void copyImageToUsb()  {
-		//Formats USB drive but it is commented because this version is for already formatted drives.
-		//this.formatUsbDrive();
+		//Formats USB drive
+		this.formatUsbDrive();
 		
-		Path t = Paths.get("C:\\Users\\CASABER\\t.zip");
-		System.out.println(t.toFile().getName().toString());
-		//Finds the directories to copy.
+		//Finds the ISO file to copy.
 		try {
-			Files.walkFileTree(Paths.get(this.defaultPath),new SoftwareFolderVisitor(this));
+			Files.walkFileTree(Paths.get(this.defaultPath),new ISOFileVisitor(this));
 		} catch (IOException e) {
 			e.printStackTrace();
-		}	
+			alertUser("Error while looking for ISO file : \n"+e.toString());
+		}
+		finally {
+			if(ISOPath==null) {
+				alertUser("ISO file : "+Constants.ISO+" not found");
+			}
+		}
+		
+		//Copies the ISO file to the destination
+		//this.copyFileToDestination(this.getDestination(), ISOPath);
+
+		//Finds the software directories to copy.
+		if(!this.image.getSoftwareFolderNames().isEmpty()) {
+			try {
+				Files.walkFileTree(Paths.get(this.defaultPath),new SoftwareFolderVisitor(this));
+			} catch (IOException e) {
+				e.printStackTrace();
+				alertUser(SOFTWARE_FOLDERS_ERROR+e.toString());
+			}
+			finally {
+				if(this.directoriesToCopy.isEmpty()) {
+					alertUser(SOFTWARE_NOT_FOUND + image.getSoftwareFolderNames().toString());
+				}
+			}
+		}
 		
 		//Checks if there are two directories that start with the same part number
 		this.checkForDuplicates(directoriesToCopy);
 		
-		System.out.println(directoriesToCopy);
+		System.out.println("new directories to copy : " + directoriesToCopy);
 		
 		//Finds the .tib file to copy.
 		try {
 			Files.walkFileTree(Paths.get(this.defaultPath),new TIBFileVisitor(this));
 		} catch (IOException e) {
 			e.printStackTrace();
-		}	
-		System.out.println(TIBPath);
+			alertUser(TIB_ERROR+e.toString());
+		}
+		finally {
+			if(TIBPath==null) {
+				alertUser(TIB_NOT_FOUND + image.getTIBName());
+			}
+		}
+		System.out.println("The tib file found : "+TIBPath);
 		
 		//Writes the information that the user input in the mainView to a .txt file
 		this.writeCustumerInformationToFile();
@@ -86,12 +121,13 @@ public class ImageCopier extends SwingWorker{
 		this.copyFileToDestination(this.getDestination(), TIBPath);
 		
 		//Copies the directories, sub-directories and files needed to the USB root.
-		directoriesToCopy.forEach(dir ->{
-			this.copyDirectoryAndContentsToDestination(dir, getDestination());
-		});
+		if(!directoriesToCopy.isEmpty()) {
+			directoriesToCopy.forEach(dir ->{
+				this.copyDirectoryAndContentsToDestination(dir, getDestination());
+			});
+		}
 	}
 
-	
 	/**
 	 * This finds duplicate software directories and asks the user if they want to copy all of them or only the first one.
 	 * Then if the user confirm NO_OPTION the second one is removed from directories to copy.
@@ -158,6 +194,7 @@ public class ImageCopier extends SwingWorker{
 			Files.write(file, lines, StandardCharsets.UTF_8);
 		} catch (IOException e) {
 			e.printStackTrace();
+			alertUser("Something happened while writing customer information to file : \n"+e.toString());
 		}
 	}
 
@@ -183,6 +220,7 @@ public class ImageCopier extends SwingWorker{
 			Files.copy(source, destination);
 		} catch (IOException e) {
 			e.printStackTrace();
+			alertUser(TIB_FILE_COPY_ERROR +e.toString());
 		}
 	}
 
@@ -200,9 +238,17 @@ public class ImageCopier extends SwingWorker{
         try {
 			Files.walk(fromPath)
 				//For each file in sourceDirectory copy it to destination
-			     .forEach(source -> copySourceToDest(source,toPath,fromPath));
+			     .forEach(source -> {
+					try {
+						copySourceToDest(source,toPath,fromPath);
+					} catch (IOException e) {
+						e.printStackTrace();
+						alertUser(SOFTWARE_FOLDER_COPY_ERROR + e.toString());
+					}
+				});
 		} catch (IOException e) {
 			e.printStackTrace();
+			alertUser(SOFTWARE_FOLDER_COPY_ERROR + e.toString());
 		}
     }
 
@@ -212,8 +258,7 @@ public class ImageCopier extends SwingWorker{
      * @param toPath : path of the destination the file is being copied to
      * @param fromPath : the root directory of the source's directory structure
      */
-    private static void copySourceToDest(Path source,Path toPath,Path fromPath) {
-    	Boolean canBeCopied = true;
+    private static void copySourceToDest(Path source,Path toPath,Path fromPath) throws IOException{
     	String subFolder = "";
     	
     	if(!source.equals(fromPath)) {
@@ -226,16 +271,9 @@ public class ImageCopier extends SwingWorker{
         //This extracts the part number of the source directory
         String partNumber = fromPath.getFileName().toString().substring(0, 11);
         //This checks if the file can be copied 
-    	if(subFolder.startsWith(partNumber) && subFolder.endsWith(".zip")) {
-        	canBeCopied = false;
+    	if(!subFolder.startsWith(partNumber) && !subFolder.endsWith(".zip")) {
+    		Files.copy(source, destination);
     	}
-        try {
-        	if(canBeCopied) {
-        		Files.copy(source, destination);
-        	}
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
     
     /**
@@ -289,8 +327,17 @@ public class ImageCopier extends SwingWorker{
 			  System.out.println(DONE_MESSAGE);
 		} catch (IOException e) {
 			e.printStackTrace();
+			alertUser(MAPPING_DRIVE_ERROR+e.toString());
 		}
     }
+    private void alertUser(String error) {
+		if(error!=null) {
+		JOptionPane.showMessageDialog(null,
+			    "FAILED -"+error,
+			    "ERROR",
+			    JOptionPane.WARNING_MESSAGE);
+		}
+	}
 
 	public String getDestination() {
 		return destination;
@@ -309,7 +356,7 @@ public class ImageCopier extends SwingWorker{
 	}
 
 	@Override
-	protected Object doInBackground() throws Exception {
+	protected Image doInBackground() throws Exception {
 		this.copyImageToUsb();
 		return null;
 	}
@@ -322,5 +369,10 @@ public class ImageCopier extends SwingWorker{
 
 	public void addDirectoryToCopy(String dir) {
 		this.directoriesToCopy.add(dir);
+	}
+
+
+	public void setISOPath(String path) {
+		this.ISOPath = path;
 	}
 }
