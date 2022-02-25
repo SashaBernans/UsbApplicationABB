@@ -9,8 +9,8 @@ import app.controller.MainController;
 public class UsbApplication {
 
 		public static void main(String args[]){
-			System.out.println(ConfigManager.getString("defaultPath"));
-			JOptionPane.showConfirmDialog(null, ConfigManager.getString("defaultPath"));
+			System.out.println("The default path : "+ConfigManager.getString("defaultPath"));
+			JOptionPane.showMessageDialog(null, "The current default path : "+ConfigManager.getString("defaultPath"));
 			new UsbApplication();
 	    }
 		

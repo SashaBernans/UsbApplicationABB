@@ -2,16 +2,13 @@ package app.view;
 
 import java.awt.Checkbox;
 import java.awt.CheckboxGroup;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Path;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -38,14 +35,16 @@ import app.model.Constants;
  */
 public class MainView extends JFrame implements ActionListener{
 	
-	private static final String ICON_PATH = "usbIcon.png";
+	private static final Font CHECKBOX_GROUP_LABEL_FONT = new Font("Serif", Font.BOLD, 16);
+	private static final String REFRESH_ACTION = "refresh";
+	private static final String REFRESH = "Detect new usb";
 	private static final String FTSWAERI_SELECTED_WITH_OTHER_THAN_LAPTOP = "FTSWAERI can only be selected with laptop computer type";
 	private static final String FNO_FTSW100_SELECTED_WITH_INDUSTRIAL_COMPUTER_MESSAGE = "FTSW100 must be selected with Industrial computer type";
 	private static final String NO_FTSW100_SELECTED_WITH_RACK_PC_MESSAGE = "FTSW100 must be selected with Rack-PC type";
 	private static final String NO_USB_SELECTED_MESSAGE = "A USB drive must be selected";
 	private static final String NO_COMPUTER_SELECTED_MESSAGE = "No computer type selected.";
-	private static final String FTSWAERI_BOX = "FTSWAERI";
-	private static final String PANASONIC_BOX = "Panasonic";
+	private static final String FTSWAERI_BOX = "	FTSWAERI";
+	private static final String PANASONIC_BOX = "	Panasonic";
 	private static final String CANCEL_ACTION_COMMAND = "create";
 	private static final String CANCEL_BUTTON_TEXT = "Cancel";
 	private static final String CREATE_ACTION_COMMAND = "run";
@@ -57,13 +56,13 @@ public class MainView extends JFrame implements ActionListener{
 	private static final String WORK_ORDER_LABEL = "Work Order:";
 	private static final String SALES_ORDER_LABEL = "Sales Order:";
 	private static final String CUSTOMER_INFORMATION_TITLE = "Customer Informations:";
-	private static final String HO_MB_BOX = "HoMB";
-	private static final String HO_QA_BOX = "HoQA";
-	private static final String FTSW100_BOX = "FTSW100";
-	private static final String INDUSTRIAL_COMPUTER_BOX = "Industrial Computer";
-	private static final String RACK_PC_BOX = "Rack PC";
-	private static final String LAPTOP_BOX = "Laptop";
-	private static final String DESKTOP_BOX = "Desktop";
+	private static final String HO_MB_BOX = "	HoMB";
+	private static final String HO_QA_BOX = "	HoQA";
+	private static final String FTSW100_BOX = "	FTSW100";
+	private static final String INDUSTRIAL_COMPUTER_BOX = "	Industrial Computer";
+	private static final String RACK_PC_BOX = "	Rack PC";
+	private static final String LAPTOP_BOX = "	Laptop";
+	private static final String DESKTOP_BOX = "	Desktop";
 	private static final String SELECT_SOFTWARE_MESSAGE = "Select software(s):";
 	private static final String SELECT_COMPUTER_MESSAGE = "Select computer type:";
 	private static final String SELECT_USB_DRIVE_MESSAGE = "Select USB drive:";
@@ -92,6 +91,7 @@ public class MainView extends JFrame implements ActionListener{
 	private JComboBox<String> usbDropDownList = new JComboBox<String>();
 	private HashMap<String, String> usbDrives = new HashMap<String, String>();
 	private String selectedDrive;
+	private JButton refreshButton = new JButton(REFRESH);
 
 	/**
 	 * This JFrame must be given a controller to communicate with other classes.
@@ -113,10 +113,11 @@ public class MainView extends JFrame implements ActionListener{
 		this.setSize(WINDOW_WIDTH,WINDOW_HEIGHT);
 		this.setLayout(new GridLayout(2,1,0,0)); // 3 rows 1 column
 		this.setResizable(false);
-		ImageIcon icon = new ImageIcon(getClass().getResource(ICON_PATH));
+		//sets the usbIcon as a window icon
+		ImageIcon icon = new ImageIcon(getClass().getResource(Constants.ICON_PATH));
 		this.setIconImage(icon.getImage());
 		//exits app on close window action
-		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 	}
 
 	
@@ -159,23 +160,54 @@ public class MainView extends JFrame implements ActionListener{
 		selectionPanel.setBorder(BorderFactory.createCompoundBorder(
 		    BorderFactory.createEmptyBorder(10, 10, 10, 10), // outer border
 		    BorderFactory.createLoweredBevelBorder()));      // inner border
-		
-		selectionPanel.setLayout(new GridLayout(2,2,0,0)); //2 rows 2 columns
+		selectionPanel.setLayout(new GridLayout(2,1,0,0)); //2 rows 1 columns
 		this.add(selectionPanel);
 		
+		setUpUsbPanel(selectionPanel);
+		
+		//Sets up the checkboxes
+		JPanel checkBoxGroupPanel = new JPanel();
+		checkBoxGroupPanel.setLayout(new GridLayout(1,2,0,0));
+		checkBoxGroupPanel.setBorder(BorderFactory.createCompoundBorder(
+			    BorderFactory.createEmptyBorder(10, 10, 10, 10), // outer border
+			    BorderFactory.createLoweredBevelBorder()));      // inner border
+		selectionPanel.add(checkBoxGroupPanel);
+		this.setUpComputerTypePanel(checkBoxGroupPanel);
+		this.setUpSoftwarePanel(checkBoxGroupPanel);
+	}
+
+	/**
+	 * This sets up the usb panel
+	 * @param selectionPanel
+	 */
+	private void setUpUsbPanel(JPanel selectionPanel) {
+		JPanel usbPanel = new JPanel();
+		usbPanel.setLayout(new GridLayout(2,2,0,0));
+		selectionPanel.add(usbPanel);
+		
 		JLabel selectUsbMessage = new JLabel(SELECT_USB_DRIVE_MESSAGE);
-		selectUsbMessage.setFont(new Font("Serif", Font.BOLD, 16));
+		selectUsbMessage.setFont(CHECKBOX_GROUP_LABEL_FONT);
+		usbPanel.add(selectUsbMessage);
 		
-		selectionPanel.add(selectUsbMessage);
-		selectionPanel.add(this.usbDropDownList);
-		
+		usbPanel.add(this.usbDropDownList);
 		//Creates gap between Panel border and usbDropDownList
 		this.usbDropDownList.setBorder(BorderFactory.createCompoundBorder(
-		    BorderFactory.createEmptyBorder(55, 11, 55, 11), // outer border
-		    BorderFactory.createLoweredBevelBorder()));// inner border
-		
-		this.setUpComputerTypePanel(selectionPanel);
-		this.setUpSoftwarePanel(selectionPanel);
+				BorderFactory.createEmptyBorder(11, 0, 11, 0), // outer border
+				BorderFactory.createLoweredBevelBorder()));// inner border
+		this.setUpRefreshPanel(usbPanel);
+	}
+	
+	/**
+	 * Sets up the button for the refresh action
+	 * @param usbPanel
+	 */
+	private void setUpRefreshPanel(JPanel usbPanel) {
+		JPanel refreshButtonPanel = new JPanel();
+		usbPanel.add(refreshButtonPanel);
+		refreshButtonPanel.setLayout(new FlowLayout());
+		refreshButtonPanel.add(this.refreshButton);
+		this.refreshButton.addActionListener(this);
+		this.refreshButton.setActionCommand(REFRESH_ACTION);
 	}
 
 	/**
@@ -196,8 +228,10 @@ public class MainView extends JFrame implements ActionListener{
 			driveType = fsv.getSystemTypeDescription(path);
 			isFAT32 = fsv.getSystemDisplayName(path).contains("UEFI_NTFS");
 			if(driveType.equals("USB Drive") && !isFAT32) {
-				this.usbDropDownList.addItem(fsv.getSystemDisplayName(path));
-				this.usbDrives.put(fsv.getSystemDisplayName(path), path.toString());
+				if(!this.usbDrives.containsKey(fsv.getSystemDisplayName(path))) {
+					this.usbDropDownList.addItem(fsv.getSystemDisplayName(path));
+					this.usbDrives.put(fsv.getSystemDisplayName(path), path.toString());
+				}
 			}
 		}
 	}
@@ -215,7 +249,7 @@ public class MainView extends JFrame implements ActionListener{
 		this.add(customerInformationPanel);
 		
 		JLabel customerInformationTitle = new JLabel(CUSTOMER_INFORMATION_TITLE, SwingConstants.CENTER);
-		customerInformationTitle.setFont(new Font("Serif", Font.BOLD, 16));
+		customerInformationTitle.setFont(CHECKBOX_GROUP_LABEL_FONT);
 		customerInformationPanel.add(customerInformationTitle);
 		
 		JLabel salesOrderLabel= new JLabel(SALES_ORDER_LABEL);
@@ -254,7 +288,7 @@ public class MainView extends JFrame implements ActionListener{
 		selectionPanel.add(softwarePanel);
 		
 		JLabel selectSoftwareMessage = new JLabel(SELECT_SOFTWARE_MESSAGE);
-		selectSoftwareMessage.setFont(new Font("Serif", Font.BOLD, 16));
+		selectSoftwareMessage.setFont(CHECKBOX_GROUP_LABEL_FONT);
 		softwarePanel.add(selectSoftwareMessage);
 		
 		softwarePanel.add(this.FTW100_Box);
@@ -273,7 +307,7 @@ public class MainView extends JFrame implements ActionListener{
 		selectionPanel.add(computerTypePanel);
 		
 		JLabel selectComputerMessage = new JLabel(SELECT_COMPUTER_MESSAGE);
-		selectComputerMessage.setFont(new Font("Serif", Font.BOLD, 16));
+		selectComputerMessage.setFont(CHECKBOX_GROUP_LABEL_FONT);
 		computerTypePanel.add(selectComputerMessage);
 		
 		computerTypePanel.add(this.desktopBox);
@@ -302,6 +336,9 @@ public class MainView extends JFrame implements ActionListener{
 			break;
 		case CANCEL_ACTION_COMMAND:
 			this.dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+			break;
+		case REFRESH_ACTION:
+			this.setUsbDrives();
 		}
 	}
 
@@ -359,6 +396,7 @@ public class MainView extends JFrame implements ActionListener{
 		this.createButton.setEnabled(false);
 		this.settingsButton.setEnabled(false);
 		this.cancelButton.setEnabled(false);
+		this.refreshButton.setEnabled(false);
 	}
 
 	/**
@@ -496,9 +534,9 @@ public class MainView extends JFrame implements ActionListener{
 	public void alertUser(String error) {
 		if(error!=null) {
 		JOptionPane.showMessageDialog(this,
-			    "FAILED -"+error,
+			    "FAILED - "+error,
 			    "ERROR",
-			    JOptionPane.WARNING_MESSAGE);
+			    JOptionPane.ERROR_MESSAGE);
 		}
 	}
 }

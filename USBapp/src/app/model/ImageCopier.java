@@ -24,12 +24,16 @@ import javax.swing.filechooser.FileSystemView;
  *if the structure changes this code may need to be modified.
  */
 public class ImageCopier extends SwingWorker<Image,String>{
+	private static final String FATAL_ERROR = "FATAL ERROR \n";
+	private static final String WRITING_CUSTOMER_INFORMATION_ERROR = "Something happened while writing customer information to file : \n";
+	private static final String ISO_NOT_FOUND = "ISO file : "+Constants.ISO+" not found";
+	private static final String ISO_FILE_ERROR = "Error while looking for ISO file : \n";
 	private static final String MAPPING_DRIVE_ERROR = "An error occured while mapping network drive : \n";
 	private static final String SOFTWARE_FOLDER_COPY_ERROR = "An error occured while copying the software folder : \n";
 	private static final String TIB_FILE_COPY_ERROR = "An error occured while copying the TIB file : \n";
 	private static final String TIB_ERROR = "An error occured while searching for the .tib file : \n";
 	private static final String TIB_NOT_FOUND = "The following .tib file was not found : \n";
-	private static final String SOFTWARE_NOT_FOUND = "The following software folders were not found : \n";
+	private static final String SOFTWARE_NOT_FOUND = "The following software(s) folder(s) was/were not found : \n";
 	private static final String SOFTWARE_FOLDERS_ERROR = "an error occured while searching for software folders : \n ";
 	private static final String STANDARD_OUTPUT_MESSAGE = "Standard Output:";
 	private static final String DONE_MESSAGE = "Done";
@@ -69,16 +73,17 @@ public class ImageCopier extends SwingWorker<Image,String>{
 			Files.walkFileTree(Paths.get(this.defaultPath),new ISOFileVisitor(this));
 		} catch (IOException e) {
 			e.printStackTrace();
-			alertUser("Error while looking for ISO file : \n"+e.toString());
+			alertUser(FATAL_ERROR+ISO_FILE_ERROR+e.toString());
+			System.exit(0);
 		}
 		finally {
 			if(ISOPath==null) {
-				alertUser("ISO file : "+Constants.ISO+" not found");
+				alertUser(ISO_NOT_FOUND);
 			}
 		}
 		
 		//Copies the ISO file to the destination
-		//this.copyFileToDestination(this.getDestination(), ISOPath);
+		this.copyFileToDestination(this.getDestination(), ISOPath);
 
 		//Finds the software directories to copy.
 		if(!this.image.getSoftwareFolderNames().isEmpty()) {
@@ -86,17 +91,21 @@ public class ImageCopier extends SwingWorker<Image,String>{
 				Files.walkFileTree(Paths.get(this.defaultPath),new SoftwareFolderVisitor(this));
 			} catch (IOException e) {
 				e.printStackTrace();
-				alertUser(SOFTWARE_FOLDERS_ERROR+e.toString());
+				alertUser(FATAL_ERROR+SOFTWARE_FOLDERS_ERROR+e.toString());
+				System.exit(0);
 			}
 			finally {
-				if(this.directoriesToCopy.isEmpty()) {
-					alertUser(SOFTWARE_NOT_FOUND + image.getSoftwareFolderNames().toString());
+				if(directoriesToCopy.size()<image.getSoftwareFolderNames().size()) {
+					String softwaresNotFound = findMissingSoftwareDirectories();
+					alertUser(SOFTWARE_NOT_FOUND + softwaresNotFound);
 				}
 			}
 		}
 		
 		//Checks if there are two directories that start with the same part number
-		this.checkForDuplicates(directoriesToCopy);
+		if(directoriesToCopy.size()>image.getSoftwareFolderNames().size()) {
+			this.checkForDuplicates(directoriesToCopy);
+		}
 		
 		System.out.println("new directories to copy : " + directoriesToCopy);
 		
@@ -105,7 +114,8 @@ public class ImageCopier extends SwingWorker<Image,String>{
 			Files.walkFileTree(Paths.get(this.defaultPath),new TIBFileVisitor(this));
 		} catch (IOException e) {
 			e.printStackTrace();
-			alertUser(TIB_ERROR+e.toString());
+			alertUser(FATAL_ERROR+TIB_ERROR+e.toString());
+			System.exit(0);
 		}
 		finally {
 			if(TIBPath==null) {
@@ -128,6 +138,28 @@ public class ImageCopier extends SwingWorker<Image,String>{
 		}
 	}
 
+
+	/**
+	 * This finds the missing directories in directories to copy
+	 * @return a string containing the part number of each missing directory
+	 */
+	private String findMissingSoftwareDirectories() {
+		String softwaresNotFound = "";
+		boolean contains;
+		for(int i =0;i<image.getSoftwareFolderNames().size();i++) {
+			contains= false;
+			for(int j =0;j<directoriesToCopy.size();j++) {
+				if(Paths.get(directoriesToCopy.get(j)).getFileName().toString().startsWith(image.getSoftwareFolderNames().get(i))) {
+					contains = true;
+				}
+			}
+			if(!contains) {
+				softwaresNotFound = softwaresNotFound+image.getSoftwareFolderNames().get(i)+"\n";
+			}
+		}
+		return softwaresNotFound;
+	}
+
 	/**
 	 * This finds duplicate software directories and asks the user if they want to copy all of them or only the first one.
 	 * Then if the user confirm NO_OPTION the second one is removed from directories to copy.
@@ -145,12 +177,12 @@ public class ImageCopier extends SwingWorker<Image,String>{
 						for(int k=duplicates.size()-1;k>0;k--) {
 							directoriesToCopy.remove(k);
 						}
+						duplicates = new ArrayList<String>();
 					}
 				}
 			}
 		}
 	}
-
 
 	/**
 	 * This ask the user if they want to copy all duplicate directories or only the first.
@@ -194,7 +226,7 @@ public class ImageCopier extends SwingWorker<Image,String>{
 			Files.write(file, lines, StandardCharsets.UTF_8);
 		} catch (IOException e) {
 			e.printStackTrace();
-			alertUser("Something happened while writing customer information to file : \n"+e.toString());
+			alertUser(WRITING_CUSTOMER_INFORMATION_ERROR+e.toString());
 		}
 	}
 
@@ -220,7 +252,8 @@ public class ImageCopier extends SwingWorker<Image,String>{
 			Files.copy(source, destination);
 		} catch (IOException e) {
 			e.printStackTrace();
-			alertUser(TIB_FILE_COPY_ERROR +e.toString());
+			alertUser(FATAL_ERROR+TIB_FILE_COPY_ERROR +e.toString());
+			System.exit(0);
 		}
 	}
 
@@ -243,12 +276,14 @@ public class ImageCopier extends SwingWorker<Image,String>{
 						copySourceToDest(source,toPath,fromPath);
 					} catch (IOException e) {
 						e.printStackTrace();
-						alertUser(SOFTWARE_FOLDER_COPY_ERROR + e.toString());
+						alertUser(FATAL_ERROR+SOFTWARE_FOLDER_COPY_ERROR +source.toString()+"\n"+ e.toString());
+						System.exit(0);
 					}
 				});
 		} catch (IOException e) {
 			e.printStackTrace();
-			alertUser(SOFTWARE_FOLDER_COPY_ERROR + e.toString());
+			alertUser(FATAL_ERROR+" An error occured while iterating threw : "+sourceDirectory+"\n error : " + e.toString());
+			System.exit(0);
 		}
     }
 
@@ -333,9 +368,9 @@ public class ImageCopier extends SwingWorker<Image,String>{
     private void alertUser(String error) {
 		if(error!=null) {
 		JOptionPane.showMessageDialog(null,
-			    "FAILED -"+error,
+			    error,
 			    "ERROR",
-			    JOptionPane.WARNING_MESSAGE);
+			    JOptionPane.ERROR_MESSAGE);
 		}
 	}
 

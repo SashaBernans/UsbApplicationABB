@@ -30,7 +30,7 @@ public class TIBFileVisitor extends SimpleFileVisitor<Path>{
 	}
 	
 	/**
-	 *This checks if the visited file starts with the right part number if so, it 
+	 *This checks if the visited file starts with the right part number, if so it 
 	 *sets it's path as the TIBPath in ImageCopier.
 	 */
 	@Override

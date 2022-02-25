@@ -30,8 +30,8 @@ public class ISOFileVisitor extends SimpleFileVisitor<Path>{
 	}
 	
 	/**
-	 *This checks if the visited file starts with the right part number if so, it 
-	 *sets it's path as the TIBPath in ImageCopier.
+	 *This checks if the visited file starts with the right part number, if so it
+	 *sets it's path as the ISOPath in ImageCopier.
 	 */
 	@Override
 	public FileVisitResult visitFile(Path file, BasicFileAttributes attr) {
