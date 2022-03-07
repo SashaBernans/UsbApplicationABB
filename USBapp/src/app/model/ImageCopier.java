@@ -1,5 +1,7 @@
 package app.model;
 
+import static java.nio.file.FileVisitResult.TERMINATE;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -30,7 +32,7 @@ public class ImageCopier extends SwingWorker<Image,String>{
 	private static final String ISO_FILE_ERROR = "Error while looking for ISO file : \n";
 	private static final String MAPPING_DRIVE_ERROR = "An error occured while mapping network drive : \n";
 	private static final String SOFTWARE_FOLDER_COPY_ERROR = "An error occured while copying the software folder : \n";
-	private static final String TIB_FILE_COPY_ERROR = "An error occured while copying the TIB file : \n";
+	private static final String TIB_FILE_COPY_ERROR = "An error occured while copying the file : \n";
 	private static final String TIB_ERROR = "An error occured while searching for the .tib file : \n";
 	private static final String TIB_NOT_FOUND = "The following .tib file was not found : \n";
 	private static final String SOFTWARE_NOT_FOUND = "The following software(s) folder(s) was/were not found : \n";
@@ -81,9 +83,10 @@ public class ImageCopier extends SwingWorker<Image,String>{
 				alertUser(ISO_NOT_FOUND);
 			}
 		}
-		
-		//Copies the ISO file to the destination
-		this.copyFileToDestination(this.getDestination(), ISOPath);
+		System.out.println("ISO : "+this.ISOPath);
+		System.out.println("DESTINATION : "+this.getDestination());
+		//Copies the ISO directory contents to the destination
+		this.copyDirectoryContentsToDestination(ISOPath, this.getDestination());
 
 		//Finds the software directories to copy.
 		if(!this.image.getSoftwareFolderNames().isEmpty()) {
@@ -173,6 +176,7 @@ public class ImageCopier extends SwingWorker<Image,String>{
 					duplicates.add(directoriesToCopy.get(j));
 				}
 				if(duplicates.size()>1 && j==directoriesToCopy.size()-1) {
+					//If user answers no then remove the duplicates
 					if(!this.askUserToCopyAll(duplicates)) {
 						for(int k=duplicates.size()-1;k>0;k--) {
 							directoriesToCopy.remove(k);
@@ -237,6 +241,21 @@ public class ImageCopier extends SwingWorker<Image,String>{
 	private void formatUsbDrive() {
 		UsbFormatter formatter = new UsbFormatter(this.destination, this.image.getWorkOrder());
 		formatter.formatToNTFS();
+	}
+	
+	private void copyDirectoryContentsToDestination(String source, String destination) {
+		Path sourcePath = Paths.get(source);
+		
+		File[] contents = sourcePath.toFile().listFiles();
+		
+		for(int i=0; i<contents.length;i++) {
+			if(contents[i].isDirectory()) {
+				this.copyDirectoryAndContentsToDestination(contents[i].toString(), destination);
+			}
+			else{
+				this.copyFileToDestination(destination, contents[i].toString());
+			}
+	   	}
 	}
 
 	/**
@@ -304,11 +323,19 @@ public class ImageCopier extends SwingWorker<Image,String>{
         Path destination = Paths.get(toPath.toString()+"\\"+fromPath.getFileName().toString()
         		, source.toString().substring(fromPath.toString().length()));
         //This extracts the part number of the source directory
-        String partNumber = fromPath.getFileName().toString().substring(0, 11);
+        String partNumber = null;
+        if(fromPath.getFileName().toString().length()>=11) {
+        	partNumber = fromPath.getFileName().toString().substring(0, 11);
+        }
         //This checks if the file can be copied 
-    	if(!subFolder.startsWith(partNumber) && !subFolder.endsWith(".zip")) {
-    		Files.copy(source, destination);
-    	}
+        if(partNumber!=null) {
+        	if(!subFolder.startsWith(partNumber) && !subFolder.endsWith(".zip")) {
+        		Files.copy(source, destination);
+        	}
+        }
+        else {
+        	Files.copy(source, destination);
+        }
     }
     
     /**
