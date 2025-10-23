@@ -1,4 +1,4 @@
-Le but du logiciel est de transféré les fichiers que l'utilisateur sélectionne dans l'interface graphique vers sa clé USB. Les fichiers sont tous sur un network drive et leurs chemin peuvent être modifié grace au fichier config.properties. Le logiciel aide alors a réduire les erreurs et accélérer le processus de configuration de pc pour la compagnie.
+This is a desktop tool in Java to automate USB image setup for new PCs, improving configuration speed and reducing human errors. Used a configurable properties system for flexible file management.
 
 # UsbApplicationABB
 Bootable USB setter upper
